@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KnowledgeGraphTool")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4899a64e23032bb12f4a7ef1f52d351455557e31")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+86e0e28217b826842d4e01c13e85f39b91f6d69e")]
 [assembly: System.Reflection.AssemblyProductAttribute("KnowledgeGraphTool")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KnowledgeGraphTool")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

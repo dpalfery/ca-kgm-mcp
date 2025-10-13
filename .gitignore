@@ -61,3 +61,27 @@ Thumbs.db
 **/.pnp.js
 **/.pnpm-store/
 **/.npmrc
+// .NET specific entries
+# Build results
+**/bin/
+**/obj/
+# Visual Studio
+**/.vs/
+# User-specific files
+**/*.user
+**/*.userosscache
+**/*.suo
+**/*.sln.docstates
+# MonoDevelop
+**/*.pidb
+**/*.userprefs
+# Rider
+**/.idea/
+**/*.sln.iml
+# NuGet
+**/*.nupkg
+# Packages folder
+**/packages/
+# .NET Core
+**/project.lock.json
+**/project.assets.json
