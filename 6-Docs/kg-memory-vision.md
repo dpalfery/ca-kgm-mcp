@@ -254,7 +254,9 @@ Using pattern matching and keyword analysis:
 | **2-Application** | service, business logic, workflow, orchestration | "Implement checkout flow", "Add business validation" |
 | **3-Domain** | entity, aggregate, value object, domain model | "Create Order entity", "Add inventory domain rules" |
 | **4-Persistence** | database, repository, SQL, query, migration | "Add user table", "Optimize product query" |
-| **5-Infrastructure** | deployment, CI/CD, monitoring, Azure, Docker | "Deploy to AKS", "Add health check endpoint" |
+| **5-Tests** | unit test, integration test, E2E, coverage | "Write unit tests for the new service" |
+| **6-Docs** | documentation, diagrams, specifications | "Update the architecture diagram" |
+| **7-Deployment** | infrastructure, CI/CD, monitoring, Azure, Docker | "Deploy to AKS", "Add health check endpoint" |
 
 **2. Topics**
 
@@ -503,7 +505,7 @@ For the system to work, project rules must be stored in a structured markdown fo
 # [Rule Name]
 
 ## Metadata
-- **Layer**: 1-Presentation | 2-Application | 3-Domain | 4-Persistence | 5-Infrastructure | *
+- **Layer**: 1-Presentation | 2-Application | 3-Domain | 4-Persistence | 5-Tests | 6-Docs | 7-Deployment | *
 - **AuthoritativeFor**: [security, testing, architecture]
 - **Topics**: [API, validation, authentication, performance]
 - **Severity**: MUST | SHOULD | MAY
@@ -883,13 +885,18 @@ Let's build it.
 │  ├─ repository-pattern.md
 │  ├─ sql-safety.md
 │  └─ migrations.md
-├─ 5-infrastructure/
+├─ 5-Tests/
+│  ├─ testing-standards.md
+│  └─ test-strategy.md
+├─ 6-Docs/
+│  ├─ architecture-decisions.md
+│  └─ onboarding.md
+├─ 7-Deployment/
 │  ├─ azure-deployment.md
 │  ├─ docker-best-practices.md
 │  └─ monitoring.md
 └─ cross-cutting/
    ├─ security-general.md
-   ├─ testing-standards.md
    ├─ code-quality.md
    └─ error-handling.md
 ```
@@ -906,5 +913,5 @@ Let's build it.
 
 **Document Version**: 1.0  
 **Last Updated**: October 2025  
-**Authors**: Architecture Team, DevEx Team  
+**Authors**: David Palfery & Claude 
 **Status**: Draft for Review
