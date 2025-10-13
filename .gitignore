@@ -1,33 +1,63 @@
-# Node modules
+# Dependency directories
 **/node_modules/
+**/bower_components/
+**/jspm_packages/
 
 # Build output
 **/dist/
 **/build/
 **/out/
+**/.next/
+**/.nuxt/
+**/.cache/
+**/.parcel-cache/
+**/.vite/
+**/.svelte-kit/
+**/.angular/
+**/.vuepress/dist/
+**/.docusaurus/
+
+# TypeScript
+**/*.tsbuildinfo
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+**/*.log
 
 # OS files
-**/.DS_Store
-**/Thumbs.db
+.DS_Store
+Thumbs.db
 
-# IDE files
+# IDEs
 **/.vscode/
 **/.idea/
+**/.vscode-test/
+**/.project
+**/.classpath
 
 # Environment files
 **/.env
 **/.env.*
-
-# TypeScript cache
-*.tsbuildinfo
+**/.env.local
+**/.env.development
+**/.env.test
+**/.env.production
 
 # Coverage
 **/coverage/
+**/.nyc_output/
 
 # Misc
-**/*.log
+**/.eslintcache
+**/.prettiercache
+**/.sass-cache/
+**/.cache/
+**/.tmp/
+**/.temp/
+**/.pnp.*
+**/.pnp.js
+**/.pnpm-store/
+**/.npmrc
