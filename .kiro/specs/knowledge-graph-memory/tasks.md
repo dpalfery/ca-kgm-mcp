@@ -1,26 +1,36 @@
 # Implementation Plan
 
-- [ ] 1. Set up project foundation and Memory MCP server integration
+- [x] 1. Set up project foundation and Memory MCP server integration
   - Fork the existing Memory MCP server codebase as the foundation
   - Set up TypeScript project structure with proper module organization
   - Configure build system and dependencies for cross-platform support
   - Ensure backward compatibility with existing Memory MCP functionality
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 2. Implement cross-platform local model detection and configuration
-  - [ ] 2.1 Create platform-specific adapters for Windows and macOS
-    - Implement WindowsPlatformAdapter with service and process detection
-    - Implement MacOSPlatformAdapter with command and app detection
+- [-] 2. Create missing MCP tool definitions and complete platform adapters
+  - [x] 2.1 Create rule MCP tool definitions
+    - Implement src/rules/rule-tools.ts with memory.rules.query_directives tool schema
+    - Add memory.rules.detect_context tool schema
+    - Add memory.rules.upsert_markdown tool schema
+    - Ensure tool schemas match the interfaces defined in rule-manager.ts
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+
+  - [ ] 2.2 Complete platform-specific adapters for Windows and macOS
+
+    - Complete MacOSPlatformAdapter implementation with command and app detection
     - Create CrossPlatformDetector to manage platform-specific logic
+    - Test Windows adapter functionality with local model providers
     - _Requirements: 9.1, 9.2, 9.5_
 
-  - [ ] 2.2 Build local model provider discovery system
+  - [ ] 2.3 Build local model provider discovery system
+
     - Implement LocalModelManager with auto-detection capabilities
     - Add support for Ollama, LocalAI, and LM Studio providers
     - Create health check and model enumeration functionality
     - _Requirements: 9.1, 9.2, 9.5_
 
-  - [ ] 2.3 Implement local model configuration and management
+  - [ ] 2.4 Implement local model configuration and management
+
     - Create LocalModelConfig interface and validation
     - Build automatic model selection based on availability and preferences
     - Add configuration persistence and caching mechanisms
