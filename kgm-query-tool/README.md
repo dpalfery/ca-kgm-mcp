@@ -1,0 +1,108 @@
+# Knowledge Graph Query Tool
+
+## Overview
+The **kgm-query-tool** package implements a lightweight knowledge‑graph pipeline that:
+- Monitors rule‑style markdown files.
+- Parses them into structured entities (Rule, Section, Directive, Pattern).
+- Populates a Memory MCP graph.
+- Retrieves the most relevant directives for a given development task.
+
+It enables the Hotshot Logistics codebase to surface architectural, security, testing, and process guidance automatically, without hard‑coding rules in the source code.
+
+## Components
+
+- **file-watcher.ts** – VS Code extension that watches the rule directories
+  (`.kilocode/rules`, `.kilocode/rules/memory-bank`, `6-Docs`) and triggers
+  incremental graph updates when markdown files are created, changed, or deleted.
+
+- **knowledge-graph-crawler.ts** – Parses markdown files into entities
+  (`RuleEntity`, `SectionEntity`, `DirectiveEntity`, `PatternEntity`) and
+  extracts layer tags and topics. It then builds relationships such as
+  *Rule CONTAINS Section* and *Section CONTAINS Directive*.
+
+- **mcp-integration.ts** – Wraps MCP memory‑server tools:
+  - `create_entities` and `create_relations` to populate the graph.
+  - `search_nodes` to execute semantic queries.
+  It batches calls to respect MCP limits.
+
+- **task-context-detector.ts** – Analyzes a free‑form task description and
+  extracts:
+  - Architectural layer (e.g., `1-Presentation`).
+  - Relevant topics (security, testing, architecture, etc.).
+  - Keywords for scoring.
+  - A confidence score.
+
+- **query-builder.ts** – Constructs a `RetrievalQuery` that combines a
+  semantic query string with structured filters (layer, topics, entity
+  types). The query is passed to the MCP server.
+
+- **ranked-retrieval.ts** – Scores raw results using a multi‑factor model:
+  authority match, when‑to‑apply, layer match, topic overlap, severity boost,
+  semantic keyword matches, and entity‑type preference. Results are sorted
+  by the final relevance score.
+
+- **response-formatter.ts** – Formats the top‑k directives into a compact
+  markdown block that includes:
+  - Directive text.
+  - Severity (`must`/`should`/`may`).
+  - Human‑readable source name.
+  - Breadcrumb showing rule > section hierarchy.
+  - Rationale explaining why the directive is relevant.
+
+- **integration-test.ts** – End‑to‑end test that simulates a task,
+  runs the full pipeline (context detection → query building → retrieval →
+  ranking → formatting) and prints the formatted response. It also verifies
+  that security, architecture, testing, and presentation‑layer directives are
+  surfaced.
+
+## How It Works
+
+1. **File Watcher** detects a markdown change and calls `updateKnowledgeGraph`.
+2. **Crawler** reads the file, extracts entities and tags, and returns them.
+3. **MCP Integration** batches the entities/relations and invokes the Memory
+   MCP `create_entities` / `create_relations` tools.
+4. When a developer supplies a task description:
+   - `detectTaskContext` identifies the layer, topics, keywords, and confidence.
+   - `buildRetrievalQuery` creates a semantic query plus structured filters.
+   - `queryKnowledgeGraph` runs `search_nodes` on the MCP server.
+   - `rankRetrievalResults` re‑scores the raw results using the relevance model.
+   - `filterAndLimitResults` removes duplicates and caps the result set.
+   - `formatRetrievalResponse` produces a concise markdown list of directives
+     with source, breadcrumb, and rationale.
+5. The formatted block can be prepended to the developer’s reasoning or
+   displayed in the IDE.
+
+## Usage
+
+- The VS Code extension activates automatically when the workspace is opened.
+- To manually refresh the entire graph, run the command `knowledgeGraph.refresh`
+  (registered in `file-watcher.ts`).
+- Run the integration test with `node integration-test.ts` to see a full
+  example execution.
+- The exported functions (`detectTaskContext`, `buildRetrievalQuery`,
+  `executeRetrievalQuery`, `rankRetrievalResults`, `formatRetrievalResponse`)
+  can be imported by other modes (e.g., `code` or `debug`) to obtain context
+  for any task.
+
+## Security & Architecture
+
+- **No secrets** are stored in the code; all MCP calls use the configured
+  `memory` server without hard‑coded credentials.
+- The solution follows **Clean Architecture**:
+  - Presentation: `file-watcher.ts` (VS Code UI).
+  - Application: `task-context-detector.ts`, `query-builder.ts`,
+    `ranked-retrieval.ts`, `response-formatter.ts`.
+  - Infrastructure: `knowledge-graph-crawler.ts`, `mcp-integration.ts`.
+- All rule files remain in markdown under the designated folders, keeping
+  business logic separate from implementation code.
+
+## Extending the Toolset
+
+To add new rule sources, update the `sourceDirs` array in
+`knowledge-graph-crawler.ts`. New entity types can be introduced by extending
+the schema interfaces and updating the `createEntities` / `createRelations`
+logic accordingly.
+
+---
+
+*Generated by the Architect mode of Kilo Code.*
