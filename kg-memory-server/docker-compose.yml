@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  kg-memory-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: kg-memory-server
+    restart: unless-stopped
+    
+    # Environment configuration
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/app/data/kg-memory.db
+      - LOG_LEVEL=info
+      - MODEL_PROVIDER=rule-based
+      # Add API keys as needed (use .env file or secrets)
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    
+    # Volume mounts for persistence
+    volumes:
+      - kg-memory-data:/app/data
+      - ./config:/app/config:ro
+      - ./rules:/app/rules:ro
+    
+    # Port mapping (if running as HTTP server)
+    ports:
+      - "3000:3000"
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('Health check')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Redis for caching (if needed)
+  redis:
+    image: redis:7-alpine
+    container_name: kg-memory-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+
+volumes:
+  kg-memory-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  default:
+    name: kg-memory-network

@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kg-memory-server
+  namespace: kg-memory-system
+  labels:
+    app.kubernetes.io/name: kg-memory-server
+    app.kubernetes.io/component: rbac
+automountServiceAccountToken: true
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kg-memory-server
+  namespace: kg-memory-system
+  labels:
+    app.kubernetes.io/name: kg-memory-server
+    app.kubernetes.io/component: rbac
+rules:
+# Allow reading ConfigMaps and Secrets
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+# Allow reading own pod information for health checks
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+  resourceNames: []
+# Allow creating events for logging
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kg-memory-server
+  namespace: kg-memory-system
+  labels:
+    app.kubernetes.io/name: kg-memory-server
+    app.kubernetes.io/component: rbac
+subjects:
+- kind: ServiceAccount
+  name: kg-memory-server
+  namespace: kg-memory-system
+roleRef:
+  kind: Role
+  name: kg-memory-server
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Optional: ClusterRole for cross-namespace access (if needed)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kg-memory-server-cluster
+  labels:
+    app.kubernetes.io/name: kg-memory-server
+    app.kubernetes.io/component: rbac
+rules:
+# Allow reading nodes for health monitoring
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list"]
+# Allow reading metrics
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["nodes", "pods"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kg-memory-server-cluster
+  labels:
+    app.kubernetes.io/name: kg-memory-server
+    app.kubernetes.io/component: rbac
+subjects:
+- kind: ServiceAccount
+  name: kg-memory-server
+  namespace: kg-memory-system
+roleRef:
+  kind: ClusterRole
+  name: kg-memory-server-cluster
+  apiGroup: rbac.authorization.k8s.io

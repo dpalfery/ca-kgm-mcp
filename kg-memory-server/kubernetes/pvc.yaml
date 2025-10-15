@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kg-memory-data-pvc
+  namespace: kg-memory-system
+  labels:
+    app.kubernetes.io/name: kg-memory-server
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd  # Adjust based on your cluster's storage classes
+  
+---
+# Optional: Shared storage for rules (if rules are large and shared)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kg-memory-rules-pvc
+  namespace: kg-memory-system
+  labels:
+    app.kubernetes.io/name: kg-memory-server
+    app.kubernetes.io/component: rules-storage
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard

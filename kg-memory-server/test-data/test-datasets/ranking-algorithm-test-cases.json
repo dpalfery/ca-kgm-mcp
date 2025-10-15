@@ -1,0 +1,312 @@
+{
+  "description": "Test cases for directive ranking algorithm validation",
+  "testCases": [
+    {
+      "id": "rank-001",
+      "taskDescription": "Create React component for user login form with validation",
+      "context": {
+        "layer": "1-Presentation",
+        "topics": ["React", "forms", "validation", "authentication"],
+        "keywords": ["component", "login", "form", "validation", "React"]
+      },
+      "availableDirectives": [
+        {
+          "id": "dir-001",
+          "ruleId": "presentation-security",
+          "section": "Input Validation",
+          "severity": "MUST",
+          "text": "Sanitize all user input before displaying it in the UI to prevent XSS attacks",
+          "topics": ["security", "XSS", "validation", "input"],
+          "whenToApply": ["user input", "forms", "React components"],
+          "layer": "1-Presentation"
+        },
+        {
+          "id": "dir-002", 
+          "ruleId": "presentation-validation",
+          "section": "Form Validation",
+          "severity": "MUST",
+          "text": "Validate form inputs on both client and server sides",
+          "topics": ["validation", "forms", "security"],
+          "whenToApply": ["forms", "user input", "validation"],
+          "layer": "1-Presentation"
+        },
+        {
+          "id": "dir-003",
+          "ruleId": "application-auth",
+          "section": "Authentication",
+          "severity": "SHOULD",
+          "text": "Implement session timeout warnings and automatic logout",
+          "topics": ["authentication", "security", "sessions"],
+          "whenToApply": ["authentication", "login", "sessions"],
+          "layer": "2-Application"
+        },
+        {
+          "id": "dir-004",
+          "ruleId": "presentation-accessibility",
+          "section": "Accessibility",
+          "severity": "MUST",
+          "text": "Ensure all interactive elements are keyboard accessible",
+          "topics": ["accessibility", "keyboard", "UI"],
+          "whenToApply": ["forms", "interactive elements", "UI components"],
+          "layer": "1-Presentation"
+        }
+      ],
+      "expectedRanking": [
+        {
+          "directiveId": "dir-002",
+          "reason": "Perfect layer match + high topic overlap (forms, validation) + MUST severity + exact whenToApply match"
+        },
+        {
+          "directiveId": "dir-001", 
+          "reason": "Perfect layer match + good topic overlap (validation, input) + MUST severity + good whenToApply match"
+        },
+        {
+          "directiveId": "dir-004",
+          "reason": "Perfect layer match + medium topic overlap (UI) + MUST severity + good whenToApply match"
+        },
+        {
+          "directiveId": "dir-003",
+          "reason": "Layer mismatch but good topic overlap (authentication, login) + SHOULD severity"
+        }
+      ]
+    },
+    {
+      "id": "rank-002",
+      "taskDescription": "Implement JWT token refresh mechanism in authentication service",
+      "context": {
+        "layer": "2-Application",
+        "topics": ["JWT", "authentication", "tokens", "security"],
+        "keywords": ["JWT", "token", "refresh", "authentication", "service"]
+      },
+      "availableDirectives": [
+        {
+          "id": "dir-005",
+          "ruleId": "application-auth",
+          "section": "JWT Management",
+          "severity": "MUST",
+          "text": "Implement proper JWT token validation and refresh mechanisms",
+          "topics": ["JWT", "authentication", "tokens", "security"],
+          "whenToApply": ["JWT", "token refresh", "authentication"],
+          "layer": "2-Application"
+        },
+        {
+          "id": "dir-006",
+          "ruleId": "application-security",
+          "section": "Rate Limiting", 
+          "severity": "MUST",
+          "text": "Implement rate limiting for all public API endpoints",
+          "topics": ["rate-limiting", "security", "API"],
+          "whenToApply": ["API endpoints", "public APIs"],
+          "layer": "2-Application"
+        },
+        {
+          "id": "dir-007",
+          "ruleId": "infrastructure-security",
+          "section": "Secrets Management",
+          "severity": "MUST", 
+          "text": "Never store secrets in code or environment variables",
+          "topics": ["secrets", "security", "configuration"],
+          "whenToApply": ["secrets", "API keys", "credentials"],
+          "layer": "5-Infrastructure"
+        }
+      ],
+      "expectedRanking": [
+        {
+          "directiveId": "dir-005",
+          "reason": "Perfect layer match + perfect topic overlap + MUST severity + exact whenToApply match"
+        },
+        {
+          "directiveId": "dir-006",
+          "reason": "Perfect layer match + medium topic overlap (security) + MUST severity"
+        },
+        {
+          "directiveId": "dir-007",
+          "reason": "Layer mismatch but good topic overlap (security) + MUST severity"
+        }
+      ]
+    },
+    {
+      "id": "rank-003",
+      "taskDescription": "Add business rule validation for minimum account balance",
+      "context": {
+        "layer": "3-Domain",
+        "topics": ["business-rules", "validation", "domain-logic"],
+        "keywords": ["business", "rule", "validation", "balance", "minimum"]
+      },
+      "availableDirectives": [
+        {
+          "id": "dir-008",
+          "ruleId": "domain-entities",
+          "section": "Business Rules",
+          "severity": "MUST",
+          "text": "Ensure all business invariants are enforced within domain entities",
+          "topics": ["business-rules", "entities", "invariants", "validation"],
+          "whenToApply": ["business rules", "domain entities", "validation"],
+          "layer": "3-Domain"
+        },
+        {
+          "id": "dir-009",
+          "ruleId": "domain-value-objects",
+          "section": "Value Objects",
+          "severity": "MUST",
+          "text": "Use value objects for domain concepts that have no identity",
+          "topics": ["value-objects", "domain-modeling", "DDD"],
+          "whenToApply": ["domain concepts", "value objects", "modeling"],
+          "layer": "3-Domain"
+        },
+        {
+          "id": "dir-010",
+          "ruleId": "application-validation",
+          "section": "Input Validation",
+          "severity": "MUST",
+          "text": "Implement proper input validation for all API endpoints",
+          "topics": ["validation", "API", "input"],
+          "whenToApply": ["API endpoints", "input validation"],
+          "layer": "2-Application"
+        }
+      ],
+      "expectedRanking": [
+        {
+          "directiveId": "dir-008",
+          "reason": "Perfect layer match + perfect topic overlap + MUST severity + exact whenToApply match"
+        },
+        {
+          "directiveId": "dir-009",
+          "reason": "Perfect layer match + medium topic overlap (domain-modeling) + MUST severity"
+        },
+        {
+          "directiveId": "dir-010",
+          "reason": "Layer mismatch but good topic overlap (validation) + MUST severity"
+        }
+      ]
+    },
+    {
+      "id": "rank-004",
+      "taskDescription": "Optimize database query performance with proper indexes",
+      "context": {
+        "layer": "4-Persistence",
+        "topics": ["performance", "database", "indexing", "optimization"],
+        "keywords": ["optimize", "query", "performance", "indexes", "database"]
+      },
+      "availableDirectives": [
+        {
+          "id": "dir-011",
+          "ruleId": "persistence-performance",
+          "section": "Indexing",
+          "severity": "MUST",
+          "text": "Create appropriate database indexes for frequently queried columns",
+          "topics": ["indexing", "performance", "database", "optimization"],
+          "whenToApply": ["database queries", "performance optimization", "indexing"],
+          "layer": "4-Persistence"
+        },
+        {
+          "id": "dir-012",
+          "ruleId": "persistence-transactions",
+          "section": "Transactions",
+          "severity": "MUST",
+          "text": "Use database transactions for operations that modify multiple related entities",
+          "topics": ["transactions", "database", "consistency"],
+          "whenToApply": ["multiple entities", "data consistency"],
+          "layer": "4-Persistence"
+        },
+        {
+          "id": "dir-013",
+          "ruleId": "application-caching",
+          "section": "Caching",
+          "severity": "SHOULD",
+          "text": "Implement caching for frequently accessed data",
+          "topics": ["caching", "performance", "optimization"],
+          "whenToApply": ["performance", "frequent access", "optimization"],
+          "layer": "2-Application"
+        }
+      ],
+      "expectedRanking": [
+        {
+          "directiveId": "dir-011",
+          "reason": "Perfect layer match + perfect topic overlap + MUST severity + exact whenToApply match"
+        },
+        {
+          "directiveId": "dir-013",
+          "reason": "Layer mismatch but good topic overlap (performance, optimization) + good whenToApply match"
+        },
+        {
+          "directiveId": "dir-012",
+          "reason": "Perfect layer match + medium topic overlap (database) + MUST severity"
+        }
+      ]
+    },
+    {
+      "id": "rank-005",
+      "taskDescription": "Set up Kubernetes deployment with health checks and monitoring",
+      "context": {
+        "layer": "5-Infrastructure",
+        "topics": ["Kubernetes", "deployment", "monitoring", "health-checks"],
+        "keywords": ["Kubernetes", "deployment", "health", "monitoring"]
+      },
+      "availableDirectives": [
+        {
+          "id": "dir-014",
+          "ruleId": "infrastructure-deployment",
+          "section": "Health Checks",
+          "severity": "MUST",
+          "text": "Implement proper health checks for all services",
+          "topics": ["health-checks", "monitoring", "deployment", "reliability"],
+          "whenToApply": ["service deployment", "health checks", "monitoring"],
+          "layer": "5-Infrastructure"
+        },
+        {
+          "id": "dir-015",
+          "ruleId": "infrastructure-containers",
+          "section": "Docker",
+          "severity": "MUST",
+          "text": "Use multi-stage Docker builds to minimize image size and attack surface",
+          "topics": ["Docker", "containers", "security", "optimization"],
+          "whenToApply": ["Docker builds", "containerization"],
+          "layer": "5-Infrastructure"
+        },
+        {
+          "id": "dir-016",
+          "ruleId": "infrastructure-monitoring",
+          "section": "Observability",
+          "severity": "MUST",
+          "text": "Implement structured logging with correlation IDs for request tracing",
+          "topics": ["logging", "monitoring", "observability", "tracing"],
+          "whenToApply": ["monitoring", "logging", "observability"],
+          "layer": "5-Infrastructure"
+        }
+      ],
+      "expectedRanking": [
+        {
+          "directiveId": "dir-014",
+          "reason": "Perfect layer match + perfect topic overlap + MUST severity + exact whenToApply match"
+        },
+        {
+          "directiveId": "dir-016",
+          "reason": "Perfect layer match + good topic overlap (monitoring) + MUST severity + good whenToApply match"
+        },
+        {
+          "directiveId": "dir-015",
+          "reason": "Perfect layer match + medium topic overlap + MUST severity"
+        }
+      ]
+    }
+  ],
+  "performanceTestCases": [
+    {
+      "id": "perf-001",
+      "description": "Large directive set ranking performance",
+      "taskDescription": "Create user registration form",
+      "directiveCount": 100,
+      "expectedMaxLatency": "50ms",
+      "expectedMemoryUsage": "< 10MB"
+    },
+    {
+      "id": "perf-002", 
+      "description": "Token budget enforcement",
+      "taskDescription": "Implement complex business logic",
+      "tokenBudget": 2000,
+      "directiveCount": 50,
+      "expectedBehavior": "Should truncate results to fit within budget while prioritizing highest-ranked directives"
+    }
+  ]
+}

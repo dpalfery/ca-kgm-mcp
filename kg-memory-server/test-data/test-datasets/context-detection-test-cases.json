@@ -1,0 +1,194 @@
+{
+  "description": "Test cases for context detection accuracy validation",
+  "testCases": [
+    {
+      "id": "cd-001",
+      "taskDescription": "Create a React component for user login form with validation",
+      "expectedLayer": "1-Presentation",
+      "expectedTopics": ["React", "forms", "validation", "authentication"],
+      "expectedKeywords": ["component", "login", "form", "validation", "React"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-002", 
+      "taskDescription": "Implement REST API endpoint for user registration with email verification",
+      "expectedLayer": "2-Application",
+      "expectedTopics": ["REST", "API", "authentication", "email", "validation"],
+      "expectedKeywords": ["API", "endpoint", "registration", "email", "verification"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-003",
+      "taskDescription": "Design User aggregate with business rules for account creation",
+      "expectedLayer": "3-Domain", 
+      "expectedTopics": ["DDD", "aggregates", "business-rules", "entities"],
+      "expectedKeywords": ["aggregate", "business", "rules", "User", "domain"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-004",
+      "taskDescription": "Create database migration for users table with proper indexing",
+      "expectedLayer": "4-Persistence",
+      "expectedTopics": ["database", "migrations", "indexing", "SQL"],
+      "expectedKeywords": ["database", "migration", "table", "indexing", "SQL"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-005",
+      "taskDescription": "Set up Kubernetes deployment with health checks and monitoring",
+      "expectedLayer": "5-Infrastructure",
+      "expectedTopics": ["Kubernetes", "deployment", "monitoring", "health-checks"],
+      "expectedKeywords": ["Kubernetes", "deployment", "health", "monitoring"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-006",
+      "taskDescription": "Add loading spinner to the submit button when form is processing",
+      "expectedLayer": "1-Presentation",
+      "expectedTopics": ["UI", "UX", "loading", "forms"],
+      "expectedKeywords": ["loading", "spinner", "button", "form", "processing"],
+      "confidence": "medium"
+    },
+    {
+      "id": "cd-007",
+      "taskDescription": "Implement JWT token refresh mechanism in authentication service",
+      "expectedLayer": "2-Application",
+      "expectedTopics": ["JWT", "authentication", "tokens", "security"],
+      "expectedKeywords": ["JWT", "token", "refresh", "authentication", "service"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-008",
+      "taskDescription": "Add business rule validation for minimum account balance",
+      "expectedLayer": "3-Domain",
+      "expectedTopics": ["business-rules", "validation", "domain-logic"],
+      "expectedKeywords": ["business", "rule", "validation", "balance", "minimum"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-009",
+      "taskDescription": "Optimize database query performance with proper indexes",
+      "expectedLayer": "4-Persistence", 
+      "expectedTopics": ["performance", "database", "indexing", "optimization"],
+      "expectedKeywords": ["optimize", "query", "performance", "indexes", "database"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-010",
+      "taskDescription": "Configure auto-scaling policies for production workloads",
+      "expectedLayer": "5-Infrastructure",
+      "expectedTopics": ["auto-scaling", "production", "performance", "Kubernetes"],
+      "expectedKeywords": ["auto-scaling", "policies", "production", "workloads"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-011",
+      "taskDescription": "Fix CSS styling issues in the navigation menu",
+      "expectedLayer": "1-Presentation",
+      "expectedTopics": ["CSS", "styling", "UI", "navigation"],
+      "expectedKeywords": ["CSS", "styling", "navigation", "menu", "fix"],
+      "confidence": "medium"
+    },
+    {
+      "id": "cd-012",
+      "taskDescription": "Handle rate limiting errors in API client",
+      "expectedLayer": "2-Application",
+      "expectedTopics": ["rate-limiting", "error-handling", "API"],
+      "expectedKeywords": ["rate", "limiting", "errors", "API", "client"],
+      "confidence": "medium"
+    },
+    {
+      "id": "cd-013",
+      "taskDescription": "Implement Order aggregate with item management",
+      "expectedLayer": "3-Domain",
+      "expectedTopics": ["DDD", "aggregates", "domain-modeling"],
+      "expectedKeywords": ["Order", "aggregate", "item", "management", "domain"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-014",
+      "taskDescription": "Add connection pooling to database configuration",
+      "expectedLayer": "4-Persistence",
+      "expectedTopics": ["connection-pooling", "database", "performance"],
+      "expectedKeywords": ["connection", "pooling", "database", "configuration"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-015",
+      "taskDescription": "Set up CI/CD pipeline with automated testing",
+      "expectedLayer": "5-Infrastructure",
+      "expectedTopics": ["CI/CD", "automation", "testing", "deployment"],
+      "expectedKeywords": ["CI/CD", "pipeline", "automated", "testing"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-016",
+      "taskDescription": "Update user profile component to show validation errors",
+      "expectedLayer": "1-Presentation",
+      "expectedTopics": ["components", "validation", "error-handling", "UI"],
+      "expectedKeywords": ["profile", "component", "validation", "errors"],
+      "confidence": "medium"
+    },
+    {
+      "id": "cd-017",
+      "taskDescription": "Add caching layer to reduce database load",
+      "expectedLayer": "2-Application",
+      "expectedTopics": ["caching", "performance", "optimization"],
+      "expectedKeywords": ["caching", "layer", "database", "load", "reduce"],
+      "confidence": "medium"
+    },
+    {
+      "id": "cd-018",
+      "taskDescription": "Create value object for Money with currency validation",
+      "expectedLayer": "3-Domain",
+      "expectedTopics": ["value-objects", "DDD", "validation"],
+      "expectedKeywords": ["value", "object", "Money", "currency", "validation"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-019",
+      "taskDescription": "Implement soft delete functionality in user repository",
+      "expectedLayer": "4-Persistence",
+      "expectedTopics": ["soft-delete", "repositories", "data-access"],
+      "expectedKeywords": ["soft", "delete", "repository", "user"],
+      "confidence": "high"
+    },
+    {
+      "id": "cd-020",
+      "taskDescription": "Configure log aggregation and monitoring alerts",
+      "expectedLayer": "5-Infrastructure",
+      "expectedTopics": ["logging", "monitoring", "alerts", "observability"],
+      "expectedKeywords": ["log", "aggregation", "monitoring", "alerts"],
+      "confidence": "high"
+    }
+  ],
+  "edgeCases": [
+    {
+      "id": "edge-001",
+      "taskDescription": "Fix bug in payment processing",
+      "expectedLayer": "*",
+      "expectedTopics": ["bug-fix", "payment"],
+      "expectedKeywords": ["fix", "bug", "payment", "processing"],
+      "confidence": "low",
+      "note": "Ambiguous - could be any layer depending on the specific bug"
+    },
+    {
+      "id": "edge-002",
+      "taskDescription": "Refactor code for better maintainability",
+      "expectedLayer": "*",
+      "expectedTopics": ["refactoring", "maintainability"],
+      "expectedKeywords": ["refactor", "code", "maintainability"],
+      "confidence": "low",
+      "note": "Generic refactoring task without specific layer context"
+    },
+    {
+      "id": "edge-003",
+      "taskDescription": "Update documentation",
+      "expectedLayer": "*",
+      "expectedTopics": ["documentation"],
+      "expectedKeywords": ["update", "documentation"],
+      "confidence": "low",
+      "note": "Documentation updates are not code implementation tasks"
+    }
+  ]
+}

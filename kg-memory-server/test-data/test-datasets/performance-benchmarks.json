@@ -1,0 +1,268 @@
+{
+  "description": "Performance benchmark test cases and expected metrics",
+  "benchmarks": [
+    {
+      "id": "bench-001",
+      "name": "Query Response Time",
+      "description": "End-to-end query processing latency",
+      "testCases": [
+        {
+          "scenario": "Simple query with 10 rules",
+          "ruleCount": 10,
+          "directiveCount": 50,
+          "expectedLatency": {
+            "p50": "< 50ms",
+            "p95": "< 100ms", 
+            "p99": "< 200ms"
+          }
+        },
+        {
+          "scenario": "Medium query with 100 rules",
+          "ruleCount": 100,
+          "directiveCount": 500,
+          "expectedLatency": {
+            "p50": "< 100ms",
+            "p95": "< 200ms",
+            "p99": "< 400ms"
+          }
+        },
+        {
+          "scenario": "Large query with 1000 rules",
+          "ruleCount": 1000,
+          "directiveCount": 5000,
+          "expectedLatency": {
+            "p50": "< 200ms",
+            "p95": "< 400ms",
+            "p99": "< 800ms"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bench-002",
+      "name": "Context Detection Performance",
+      "description": "Context detection engine performance across different providers",
+      "testCases": [
+        {
+          "provider": "rule-based",
+          "expectedLatency": {
+            "p50": "< 10ms",
+            "p95": "< 20ms",
+            "p99": "< 50ms"
+          },
+          "accuracy": "> 75%"
+        },
+        {
+          "provider": "local-model",
+          "expectedLatency": {
+            "p50": "< 100ms",
+            "p95": "< 200ms", 
+            "p99": "< 500ms"
+          },
+          "accuracy": "> 85%"
+        },
+        {
+          "provider": "cloud-model",
+          "expectedLatency": {
+            "p50": "< 200ms",
+            "p95": "< 500ms",
+            "p99": "< 1000ms"
+          },
+          "accuracy": "> 90%"
+        }
+      ]
+    },
+    {
+      "id": "bench-003",
+      "name": "Memory Usage",
+      "description": "Memory consumption under various loads",
+      "testCases": [
+        {
+          "scenario": "Baseline memory usage",
+          "ruleCount": 0,
+          "expectedMemory": "< 50MB"
+        },
+        {
+          "scenario": "Small knowledge graph",
+          "ruleCount": 10,
+          "directiveCount": 50,
+          "expectedMemory": "< 100MB"
+        },
+        {
+          "scenario": "Medium knowledge graph",
+          "ruleCount": 100,
+          "directiveCount": 500,
+          "expectedMemory": "< 200MB"
+        },
+        {
+          "scenario": "Large knowledge graph",
+          "ruleCount": 1000,
+          "directiveCount": 5000,
+          "expectedMemory": "< 500MB"
+        }
+      ]
+    },
+    {
+      "id": "bench-004",
+      "name": "Token Efficiency",
+      "description": "Token usage reduction compared to baseline approaches",
+      "testCases": [
+        {
+          "scenario": "Presentation layer tasks",
+          "baselineTokens": 5000,
+          "expectedReduction": "70-85%",
+          "targetTokens": "750-1500"
+        },
+        {
+          "scenario": "Application layer tasks", 
+          "baselineTokens": 6000,
+          "expectedReduction": "70-85%",
+          "targetTokens": "900-1800"
+        },
+        {
+          "scenario": "Domain layer tasks",
+          "baselineTokens": 4000,
+          "expectedReduction": "70-85%",
+          "targetTokens": "600-1200"
+        },
+        {
+          "scenario": "Persistence layer tasks",
+          "baselineTokens": 5500,
+          "expectedReduction": "70-85%",
+          "targetTokens": "825-1650"
+        },
+        {
+          "scenario": "Infrastructure layer tasks",
+          "baselineTokens": 7000,
+          "expectedReduction": "70-85%",
+          "targetTokens": "1050-2100"
+        }
+      ]
+    },
+    {
+      "id": "bench-005",
+      "name": "Concurrent Query Performance",
+      "description": "Performance under concurrent load",
+      "testCases": [
+        {
+          "concurrentUsers": 10,
+          "queriesPerSecond": 50,
+          "expectedLatency": {
+            "p50": "< 100ms",
+            "p95": "< 300ms",
+            "p99": "< 500ms"
+          },
+          "expectedThroughput": "> 45 QPS"
+        },
+        {
+          "concurrentUsers": 50,
+          "queriesPerSecond": 200,
+          "expectedLatency": {
+            "p50": "< 200ms",
+            "p95": "< 500ms",
+            "p99": "< 1000ms"
+          },
+          "expectedThroughput": "> 180 QPS"
+        },
+        {
+          "concurrentUsers": 100,
+          "queriesPerSecond": 400,
+          "expectedLatency": {
+            "p50": "< 300ms",
+            "p95": "< 800ms",
+            "p99": "< 1500ms"
+          },
+          "expectedThroughput": "> 350 QPS"
+        }
+      ]
+    },
+    {
+      "id": "bench-006",
+      "name": "Cache Performance",
+      "description": "Caching effectiveness and performance impact",
+      "testCases": [
+        {
+          "scenario": "Cold cache",
+          "cacheHitRate": "0%",
+          "expectedLatency": "baseline"
+        },
+        {
+          "scenario": "Warm cache - 50% hit rate",
+          "cacheHitRate": "50%",
+          "expectedLatencyReduction": "30-40%"
+        },
+        {
+          "scenario": "Hot cache - 90% hit rate",
+          "cacheHitRate": "90%",
+          "expectedLatencyReduction": "70-80%"
+        }
+      ]
+    }
+  ],
+  "loadTestScenarios": [
+    {
+      "id": "load-001",
+      "name": "Gradual Load Increase",
+      "description": "Gradually increase load to find breaking point",
+      "phases": [
+        {
+          "duration": "2m",
+          "users": 10,
+          "rampUp": "30s"
+        },
+        {
+          "duration": "5m", 
+          "users": 50,
+          "rampUp": "1m"
+        },
+        {
+          "duration": "10m",
+          "users": 100,
+          "rampUp": "2m"
+        },
+        {
+          "duration": "5m",
+          "users": 200,
+          "rampUp": "1m"
+        }
+      ],
+      "successCriteria": {
+        "errorRate": "< 1%",
+        "p95Latency": "< 500ms",
+        "throughput": "> 300 QPS"
+      }
+    },
+    {
+      "id": "load-002",
+      "name": "Spike Test",
+      "description": "Test system behavior under sudden load spikes",
+      "phases": [
+        {
+          "duration": "2m",
+          "users": 10,
+          "rampUp": "30s"
+        },
+        {
+          "duration": "1m",
+          "users": 200,
+          "rampUp": "10s"
+        },
+        {
+          "duration": "5m",
+          "users": 200,
+          "rampUp": "0s"
+        },
+        {
+          "duration": "2m",
+          "users": 10,
+          "rampUp": "30s"
+        }
+      ],
+      "successCriteria": {
+        "errorRate": "< 5%",
+        "recoveryTime": "< 30s",
+        "p95Latency": "< 1000ms"
+      }
+    }
+  ]
+}

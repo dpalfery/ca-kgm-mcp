@@ -1,0 +1,78 @@
+{
+  "name": "kg-memory-server",
+  "version": "1.0.0",
+  "description": "Knowledge Graph Memory MCP Server - Fork of Memory MCP Server with rule-based context detection and ranking",
+  "license": "MIT",
+  "author": "Forked from Anthropic Memory MCP Server",
+  "homepage": "https://github.com/your-org/kg-memory-server",
+  "bugs": "https://github.com/your-org/kg-memory-server/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/kg-memory-server.git"
+  },
+  "keywords": [
+    "mcp",
+    "memory",
+    "knowledge-graph",
+    "context-detection",
+    "ai-assistant",
+    "rules-engine",
+    "semantic-search"
+  ],
+  "type": "module",
+  "bin": {
+    "kg-memory-server": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "DEPLOYMENT.md",
+    "LICENSE",
+    "kubernetes/",
+    "docker-compose.yml",
+    "Dockerfile.production"
+  ],
+  "scripts": {
+    "build": "tsc && shx chmod +x dist/*.js",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "dev": "npm run build && node dist/index.js",
+    "clean": "shx rm -rf dist",
+    "lint": "tsc --noEmit",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:integration": "vitest --run test-data/integration-tests/",
+    "test:integration:comprehensive": "vitest --run test-data/integration-tests/comprehensive-integration.test.ts",
+    "test:integration:mcp": "vitest --run test-data/integration-tests/mcp-protocol-compliance.test.ts",
+    "test:integration:scenarios": "vitest --run test-data/integration-tests/real-world-scenarios.test.ts",
+    "test:performance": "vitest --run test-data/integration-tests/performance-validation.test.ts",
+    "test:accuracy": "vitest --run test-data/integration-tests/accuracy-validation.test.ts",
+    "test:load": "vitest --run test-data/integration-tests/load-testing.test.ts",
+    "test:all": "npm run test && npm run test:integration",
+    "test:task-10-4": "tsx test-data/integration-tests/integration-test-runner.ts",
+    "validate": "tsx test-data/integration-tests/test-data-validator.ts",
+    "validate:integration": "tsx test-data/integration-tests/integration-test-runner.ts",
+    "start": "node dist/index.js",
+    "docker:build": "docker build -f Dockerfile.production -t kg-memory-server:latest .",
+    "docker:run": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "k8s:deploy": "./scripts/deploy.sh deploy",
+    "k8s:undeploy": "./scripts/deploy.sh undeploy",
+    "package": "npm pack",
+    "release": "npm run test:all && npm run build && npm run package"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.1",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/sqlite3": "^3.1.11",
+    "@vitest/ui": "^3.2.4",
+    "shx": "^0.3.4",
+    "tsx": "^4.20.6",
+    "typescript": "^5.6.2",
+    "vitest": "^3.2.4"
+  }
+}

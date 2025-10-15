@@ -1,0 +1,195 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kg-memory-server
+  namespace: kg-memory-system
+  labels:
+    app.kubernetes.io/name: kg-memory-server
+    app.kubernetes.io/component: server
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kg-memory-server
+      app.kubernetes.io/component: server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kg-memory-server
+        app.kubernetes.io/component: server
+        app.kubernetes.io/version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: kg-memory-server
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      
+      containers:
+      - name: kg-memory-server
+        image: kg-memory-server:1.0.0
+        imagePullPolicy: IfNotPresent
+        
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        
+        env:
+        # Configuration from ConfigMap
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: kg-memory-config
+              key: NODE_ENV
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: kg-memory-config
+              key: LOG_LEVEL
+        - name: DATABASE_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: kg-memory-config
+              key: DATABASE_PATH
+        - name: MODEL_PROVIDER
+          valueFrom:
+            configMapKeyRef:
+              name: kg-memory-config
+              key: MODEL_PROVIDER
+        
+        # Secrets (optional)
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kg-memory-secrets
+              key: openai-api-key
+              optional: true
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kg-memory-secrets
+              key: anthropic-api-key
+              optional: true
+        
+        # Resource limits and requests
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        
+        # Startup probe for slower initialization
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
+        
+        # Volume mounts
+        volumeMounts:
+        - name: data-storage
+          mountPath: /app/data
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: rules-volume
+          mountPath: /app/rules
+          readOnly: true
+        - name: logs-volume
+          mountPath: /app/logs
+        
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      
+      # Volumes
+      volumes:
+      - name: data-storage
+        persistentVolumeClaim:
+          claimName: kg-memory-data-pvc
+      - name: config-volume
+        configMap:
+          name: kg-memory-config
+      - name: rules-volume
+        configMap:
+          name: kg-memory-rules
+          optional: true
+      - name: logs-volume
+        emptyDir: {}
+      
+      # Pod disruption budget and affinity
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - kg-memory-server
+              topologyKey: kubernetes.io/hostname
+      
+      # Tolerations for node selection
+      tolerations:
+      - key: "node-role.kubernetes.io/worker"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: kg-memory-server-pdb
+  namespace: kg-memory-system
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kg-memory-server
+      app.kubernetes.io/component: server

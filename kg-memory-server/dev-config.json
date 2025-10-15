@@ -1,0 +1,84 @@
+{
+  "modelProvider": {
+    "type": "rule-based",
+    "provider": "heuristic",
+    "config": {
+      "layerKeywords": {
+        "1-Presentation": [
+          "UI", "component", "React", "Vue", "Angular", "CSS", "HTML", "frontend",
+          "user interface", "view", "template", "styling", "responsive", "accessibility"
+        ],
+        "2-Application": [
+          "service", "controller", "API", "endpoint", "business logic", "workflow",
+          "orchestration", "application", "use case", "command", "query", "handler"
+        ],
+        "3-Domain": [
+          "entity", "aggregate", "domain", "business rule", "policy", "invariant",
+          "value object", "domain service", "specification", "rule engine"
+        ],
+        "4-Persistence": [
+          "database", "SQL", "repository", "ORM", "migration", "schema", "query",
+          "transaction", "data access", "storage", "persistence", "CRUD"
+        ],
+        "5-Infrastructure": [
+          "deployment", "configuration", "logging", "monitoring", "security",
+          "authentication", "authorization", "infrastructure", "DevOps", "CI/CD"
+        ]
+      },
+      "topicKeywords": {
+        "security": [
+          "authentication", "authorization", "encryption", "security", "vulnerability",
+          "OWASP", "XSS", "CSRF", "SQL injection", "sanitization", "validation"
+        ],
+        "performance": [
+          "performance", "optimization", "caching", "latency", "throughput",
+          "scalability", "load", "memory", "CPU", "bottleneck"
+        ],
+        "testing": [
+          "test", "testing", "unit test", "integration test", "mock", "stub",
+          "TDD", "BDD", "coverage", "assertion", "fixture"
+        ],
+        "api": [
+          "API", "REST", "GraphQL", "endpoint", "HTTP", "JSON", "XML",
+          "request", "response", "status code", "header"
+        ]
+      }
+    }
+  },
+  "ranking": {
+    "weights": {
+      "authority": 10,
+      "layerMatch": 7,
+      "topicOverlap": 5,
+      "severityBoost": 4,
+      "semanticSimilarity": 3,
+      "whenToApply": 8
+    },
+    "severityMultipliers": {
+      "MUST": 3.0,
+      "SHOULD": 2.0,
+      "MAY": 1.0
+    },
+    "tokenEstimation": {
+      "averageTokensPerDirective": 50,
+      "overheadTokens": 100
+    }
+  },
+  "output": {
+    "defaultOptions": {
+      "includeBreadcrumbs": true,
+      "includeExamples": true,
+      "includeAntiPatterns": false,
+      "includeRationale": true,
+      "maxLineLength": 120,
+      "groupBySeverity": true,
+      "showScores": false
+    }
+  },
+  "storage": {
+    "databasePath": "./kg-memory.db",
+    "enableWAL": true,
+    "cacheSize": 1000,
+    "busyTimeout": 5000
+  }
+}
