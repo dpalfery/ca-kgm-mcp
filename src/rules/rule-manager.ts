@@ -11,6 +11,9 @@ import { Neo4jConfig } from '../config/neo4j-types.js';
 import { detectLayer } from '../detection/layer-detector.js';
 import { detectTechnologies } from '../detection/tech-detector.js';
 import { detectTopics } from '../detection/topic-detector.js';
+import { MarkdownParser } from '../parsing/markdown-parser.js';
+import { DirectiveExtractor } from '../parsing/directive-extractor.js';
+import { GraphBuilder } from '../parsing/graph-builder.js';
 
 // Schema definitions for rule operations
 const QueryDirectivesSchema = z.object({
@@ -188,20 +191,140 @@ ${context.technologies.length > 0 ? `- **[SHOULD]** Use ${context.technologies[0
   }
 
   private async upsertMarkdown(args: any): Promise<any> {
-    UpsertMarkdownSchema.parse(args);
+    const params = UpsertMarkdownSchema.parse(args);
     
-    // For now, return a placeholder response
-    // This will be implemented in later tasks
+    if (!this.connection) {
+      throw new Error('Connection not initialized');
+    }
+
+    const parser = new MarkdownParser();
+    const extractor = new DirectiveExtractor();
+    const graphBuilder = new GraphBuilder();
+
+    const totalStats = {
+      rules: 0,
+      sections: 0,
+      directives: 0,
+      patterns: 0
+    };
+    let totalRelations = 0;
+    const warnings: string[] = [];
+    const errors: string[] = [];
+
+    for (const doc of params.documents) {
+      try {
+        // Get markdown content
+        let content = doc.content;
+        if (!content) {
+          // If no content provided, try to read from file (not implemented yet)
+          warnings.push(`No content provided for ${doc.path}, skipping`);
+          continue;
+        }
+
+        // Parse markdown
+        const parsed = parser.parse(content);
+
+        // Extract directives
+        const extractionResult = extractor.extractFromSections(
+          parsed.sections,
+          parsed.metadata
+        );
+
+        // Add extraction warnings
+        warnings.push(...extractionResult.warnings);
+
+        // Build graph structure
+        const graphResult = graphBuilder.buildGraph(
+          parsed,
+          extractionResult.directives,
+          doc.path
+        );
+
+        // Add graph warnings and errors
+        warnings.push(...graphResult.warnings);
+        errors.push(...graphResult.errors);
+
+        // Validate graph
+        const validation = graphBuilder.validateGraph(graphResult.structure);
+        if (!validation.valid) {
+          errors.push(`Validation failed for ${doc.path}: ${validation.errors.join(', ')}`);
+          continue;
+        }
+
+        // If validateOnly, skip persistence
+        if (params.options.validateOnly) {
+          totalStats.rules += graphResult.stats.rulesCreated;
+          totalStats.sections += graphResult.stats.sectionsCreated;
+          totalStats.directives += graphResult.stats.directivesCreated;
+          totalRelations += graphResult.stats.relationshipsCreated;
+          continue;
+        }
+
+        // Check if rule already exists (if not overwrite)
+        if (!params.options.overwrite) {
+          const session = this.connection.getSession();
+          try {
+            const existing = await session.run(
+              'MATCH (r:Rule {sourcePath: $path}) RETURN r LIMIT 1',
+              { path: doc.path }
+            );
+
+            if (existing.records.length > 0) {
+              warnings.push(`Rule from ${doc.path} already exists, skipping (use overwrite: true to replace)`);
+              await session.close();
+              continue;
+            }
+          } finally {
+            await session.close();
+          }
+        } else {
+          // Delete existing rule and related nodes
+          const session = this.connection.getSession();
+          try {
+            await session.run(
+              'MATCH (r:Rule {sourcePath: $path}) DETACH DELETE r',
+              { path: doc.path }
+            );
+          } finally {
+            await session.close();
+          }
+        }
+
+        // Persist to Neo4j in a transaction
+        const session = this.connection.getSession();
+        try {
+          await session.executeWrite(async (tx) => {
+            const result = await graphBuilder.persistToNeo4j(
+              tx as any, // Type cast for compatibility
+              graphResult.structure
+            );
+
+            totalStats.rules += graphResult.stats.rulesCreated;
+            totalStats.sections += graphResult.stats.sectionsCreated;
+            totalStats.directives += graphResult.stats.directivesCreated;
+            totalRelations += result.relationshipsCreated;
+          });
+        } catch (error) {
+          errors.push(
+            `Failed to persist ${doc.path}: ${error instanceof Error ? error.message : String(error)}`
+          );
+        } finally {
+          await session.close();
+        }
+
+      } catch (error) {
+        errors.push(
+          `Failed to process ${doc.path}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    }
+
     return {
-      upserted: {
-        rules: 0,
-        sections: 0,
-        directives: 0,
-        patterns: 0
-      },
-      relations: 0,
-      warnings: [],
-      errors: []
+      upserted: totalStats,
+      relations: totalRelations,
+      warnings,
+      errors,
+      timestamp: new Date().toISOString()
     };
   }
 
