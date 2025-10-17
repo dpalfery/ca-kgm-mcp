@@ -54,7 +54,8 @@ vi.mock('neo4j-driver', () => {
       driver: () => new FakeDriver(),
       auth: {
         basic: () => ({})
-      }
+      },
+      int: (value: number) => value
     }
   };
 });
