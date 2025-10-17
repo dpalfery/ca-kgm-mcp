@@ -1,8 +1,8 @@
 /**
- * Memory Tools Configuration
+ * ContextISO Memory Tools Configuration
  * 
- * Defines the original Memory MCP tools for backward compatibility.
- * These tools maintain the same interface as the original Memory MCP server.
+ * Defines the memory tools for context storage and retrieval.
+ * These tools provide the interface for storing and accessing contextual information.
  */
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
