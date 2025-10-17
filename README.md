@@ -103,6 +103,8 @@ ContextISO exposes MCP tools for context management:
 - `detect_context` - Identify relevant contextual patterns
 - `update_rules` - Modify existing rules
 
+**Creating Rule Documents:** Use the [`.github/rule` template](.github/rule-template.md) to create project-specific rules. See the [Rule Template Guide](.github/RULE-TEMPLATE-README.md) for complete documentation.
+
 ### Example: Storing Context
 
 ```typescript
@@ -126,6 +128,47 @@ const results = await memoryManager.searchNodes({
   limit: 10
 });
 ```
+
+### Example: Creating Rule Documents
+
+Create project-specific rules using the template:
+
+```bash
+# Copy the template
+cp .github/rule-template.md .github/my-project-rules.md
+
+# Edit with your rules
+# See .github/RULE-TEMPLATE-README.md for format details
+
+# Validate the format
+node .github/validate-template.cjs
+```
+
+**Rule Document Format:**
+
+```markdown
+---
+title: "Your Rules"
+layer: "2-Application"
+topics:
+  - "security"
+  - "testing"
+technologies:
+  - "TypeScript"
+---
+
+# Your Rules
+
+[MUST] This is a mandatory requirement.
+[SHOULD] This is a recommended practice.
+[MAY] This is an optional consideration.
+```
+
+For complete documentation on creating rule documents, see:
+- [Rule Template](.github/rule-template.md) - Full annotated template
+- [Template Guide](.github/RULE-TEMPLATE-README.md) - Complete documentation
+- [Quick Reference](.github/QUICK-REFERENCE.md) - Quick lookup guide
+- [Example Rules](.github/example-typescript-rules.md) - Working example
 
 ## Testing
 
