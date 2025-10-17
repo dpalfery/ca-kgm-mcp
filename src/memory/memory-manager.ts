@@ -1,13 +1,15 @@
 /**
- * Memory Manager
+ * Memory Manager (Neo4j Implementation)
  * 
- * Handles original Memory MCP server functionality to ensure backward compatibility.
- * This module wraps the core memory operations (entities, relations, search) that
- * existing Memory MCP clients expect.
+ * ContextISO Memory Layer - Manages entity storage, relationships, and retrieval.
+ * Provides context isolation and optimization through Neo4j Aura cloud backend.
+ * Handles core operations: entity management, relationship tracking, and context search.
  */
 
-import Database from 'better-sqlite3';
 import { z } from 'zod';
+import neo4j from 'neo4j-driver';
+import { Neo4jConnection } from '../storage/neo4j-connection.js';
+import { Neo4jConfig } from '../config/neo4j-types.js';
 
 // Schema definitions for memory operations
 const EntitySchema = z.object({
@@ -24,7 +26,7 @@ const RelationSchema = z.object({
 
 const SearchNodeSchema = z.object({
   query: z.string(),
-  limit: z.number().optional().default(10),
+  limit: z.number().int().optional().default(10),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;
@@ -32,70 +34,27 @@ export type Relation = z.infer<typeof RelationSchema>;
 export type SearchNode = z.infer<typeof SearchNodeSchema>;
 
 /**
- * Memory Manager class that provides original Memory MCP functionality
+ * Memory Manager class that provides ContextISO context management via Neo4j
  */
 export class MemoryManager {
-  private db: Database.Database | null = null;
-  private dbPath: string;
+  private connection: Neo4jConnection | null = null;
+  private config: Neo4jConfig;
 
-  constructor(dbPath: string = './memory.db') {
-    this.dbPath = dbPath;
+  constructor(config: Neo4jConfig) {
+    this.config = config;
   }
 
   async initialize(): Promise<void> {
     try {
-      this.db = new Database(this.dbPath);
-      
-      // Enable WAL mode for better concurrent access
-      this.db.pragma('journal_mode = WAL');
-      
-      // Create original Memory MCP tables
-      this.createMemoryTables();
-      
+      this.connection = new Neo4jConnection(this.config);
+      await this.connection.connect();
+      await this.connection.createSchema();
       console.error('Memory manager initialized successfully');
     } catch (error) {
-      throw new Error(`Failed to initialize memory manager: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to initialize memory manager: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
-  }
-
-  private createMemoryTables(): void {
-    if (!this.db) {
-      throw new Error('Database not initialized');
-    }
-
-    // Entities table (original Memory MCP schema)
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS entities (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL,
-        entity_type TEXT NOT NULL,
-        observations TEXT, -- JSON array
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Relations table (original Memory MCP schema)
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS relations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        from_entity TEXT NOT NULL,
-        to_entity TEXT NOT NULL,
-        relation_type TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (from_entity) REFERENCES entities(name),
-        FOREIGN KEY (to_entity) REFERENCES entities(name)
-      )
-    `);
-
-    // Create indexes for performance
-    this.db.exec(`
-      CREATE INDEX IF NOT EXISTS idx_entities_name ON entities(name);
-      CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(entity_type);
-      CREATE INDEX IF NOT EXISTS idx_relations_from ON relations(from_entity);
-      CREATE INDEX IF NOT EXISTS idx_relations_to ON relations(to_entity);
-      CREATE INDEX IF NOT EXISTS idx_relations_type ON relations(relation_type);
-    `);
   }
 
   async handleTool(name: string, args: any): Promise<any> {
@@ -115,160 +74,183 @@ export class MemoryManager {
 
   private async createEntities(args: any): Promise<any> {
     const { entities } = args;
-    
+
     if (!Array.isArray(entities)) {
       throw new Error('entities must be an array');
     }
 
     const validatedEntities = entities.map(entity => EntitySchema.parse(entity));
-    const created: string[] = [];
-    const updated: string[] = [];
 
-    if (!this.db) {
-      throw new Error('Database not initialized');
+    if (!this.connection) {
+      throw new Error('Connection not initialized');
     }
 
-    const insertStmt = this.db.prepare(`
-      INSERT OR REPLACE INTO entities (name, entity_type, observations, updated_at)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-    `);
+    const session = this.connection.getSession();
+    try {
+      const result = await session.run(
+        `
+        UNWIND $entities AS entity
+        MERGE (e:Entity {name: entity.name})
+        ON CREATE SET
+          e.entityType = entity.entityType,
+          e.observations = entity.observations,
+          e.createdAt = datetime(),
+          e.updatedAt = datetime()
+        ON MATCH SET
+          e.entityType = entity.entityType,
+          e.observations = entity.observations,
+          e.updatedAt = datetime()
+        RETURN e.name AS name,
+               e.createdAt AS createdAt,
+               e.updatedAt AS updatedAt
+        `,
+        { entities: validatedEntities }
+      );
 
-    const checkStmt = this.db.prepare(`
-      SELECT name FROM entities WHERE name = ?
-    `);
+      const created = result.records.filter(
+        r => r.get('createdAt').toString() === r.get('updatedAt').toString()
+      ).length;
 
-    for (const entity of validatedEntities) {
-      const existing = checkStmt.get(entity.name);
-      const observations = entity.observations ? JSON.stringify(entity.observations) : null;
-      
-      insertStmt.run(entity.name, entity.entityType, observations);
-      
-      if (existing) {
-        updated.push(entity.name);
-      } else {
-        created.push(entity.name);
-      }
+      return {
+        created,
+        updated: result.records.length - created,
+        entities: result.records.map(r => r.get('name'))
+      };
+    } finally {
+      await session.close();
     }
-
-    return {
-      created: created.length,
-      updated: updated.length,
-      entities: [...created, ...updated]
-    };
   }
 
   private async createRelations(args: any): Promise<any> {
     const { relations } = args;
-    
+
     if (!Array.isArray(relations)) {
       throw new Error('relations must be an array');
     }
 
     const validatedRelations = relations.map(relation => RelationSchema.parse(relation));
-    let created = 0;
 
-    if (!this.db) {
-      throw new Error('Database not initialized');
+    if (!this.connection) {
+      throw new Error('Connection not initialized');
     }
 
-    const insertStmt = this.db.prepare(`
-      INSERT OR IGNORE INTO relations (from_entity, to_entity, relation_type)
-      VALUES (?, ?, ?)
-    `);
+    const session = this.connection.getSession();
+    try {
+      const result = await session.run(
+        `
+        UNWIND $relations AS rel
+        MATCH (from:Entity {name: rel.from})
+        MATCH (to:Entity {name: rel.to})
+        MERGE (from)-[r:RELATES_TO {type: rel.relationType}]->(to)
+        ON CREATE SET r.createdAt = datetime()
+        RETURN count(r) AS created
+        `,
+        { relations: validatedRelations }
+      );
 
-    for (const relation of validatedRelations) {
-      const result = insertStmt.run(relation.from, relation.to, relation.relationType);
-      if (result.changes > 0) {
-        created++;
-      }
+      return {
+        created: result.records[0].get('created').toNumber(),
+        total: validatedRelations.length
+      };
+    } finally {
+      await session.close();
     }
-
-    return {
-      created,
-      total: validatedRelations.length
-    };
   }
 
   private async searchNodes(args: any): Promise<any> {
     const searchParams = SearchNodeSchema.parse(args);
-    
-    if (!this.db) {
-      throw new Error('Database not initialized');
+
+    if (!this.connection) {
+      throw new Error('Connection not initialized');
     }
 
-    // Simple text-based search for now (can be enhanced with vector search later)
-    const searchStmt = this.db.prepare(`
-      SELECT 
-        name,
-        entity_type,
-        observations,
-        created_at,
-        updated_at
-      FROM entities 
-      WHERE 
-        name LIKE ? OR 
-        entity_type LIKE ? OR 
-        observations LIKE ?
-      ORDER BY updated_at DESC
-      LIMIT ?
-    `);
+    const session = this.connection.getSession();
+    try {
+      // Use full-text search
+      const result = await session.run(
+        `
+        CALL db.index.fulltext.queryNodes('entity_search', $query)
+        YIELD node, score
+        RETURN node.name AS name,
+               node.entityType AS entityType,
+               node.observations AS observations,
+               node.createdAt AS createdAt,
+               node.updatedAt AS updatedAt,
+               score
+        ORDER BY score DESC
+        LIMIT $limit
+        `,
+        {
+          query: searchParams.query,
+          limit: neo4j.int(Math.floor(searchParams.limit))
+        }
+      );
 
-    const searchTerm = `%${searchParams.query}%`;
-    const results = searchStmt.all(searchTerm, searchTerm, searchTerm, searchParams.limit);
-
-    return {
-      nodes: results.map(row => ({
-        name: row.name,
-        entityType: row.entity_type,
-        observations: row.observations ? JSON.parse(row.observations) : [],
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      }))
-    };
+      return {
+        nodes: result.records.map(record => ({
+          name: record.get('name'),
+          entityType: record.get('entityType'),
+          observations: record.get('observations') || [],
+          createdAt: record.get('createdAt'),
+          updatedAt: record.get('updatedAt'),
+          score: record.get('score')
+        }))
+      };
+    } finally {
+      await session.close();
+    }
   }
 
-  private async readGraph(args: any): Promise<any> {
-    if (!this.db) {
-      throw new Error('Database not initialized');
+  private async readGraph(_args: any): Promise<any> {
+    if (!this.connection) {
+      throw new Error('Connection not initialized');
     }
 
-    // Get all entities and relations
-    const entitiesStmt = this.db.prepare(`
-      SELECT name, entity_type, observations, created_at, updated_at
-      FROM entities
-      ORDER BY name
-    `);
+    const session = this.connection.getSession();
+    try {
+      const entitiesResult = await session.run(`
+        MATCH (e:Entity)
+        RETURN e.name AS name,
+               e.entityType AS entityType,
+               e.observations AS observations,
+               e.createdAt AS createdAt,
+               e.updatedAt AS updatedAt
+        ORDER BY e.name
+      `);
 
-    const relationsStmt = this.db.prepare(`
-      SELECT from_entity, to_entity, relation_type, created_at
-      FROM relations
-      ORDER BY from_entity, to_entity
-    `);
+      const relationsResult = await session.run(`
+        MATCH (from:Entity)-[r:RELATES_TO]->(to:Entity)
+        RETURN from.name AS fromEntity,
+               to.name AS toEntity,
+               r.type AS relationType,
+               r.createdAt AS createdAt
+        ORDER BY from.name, to.name
+      `);
 
-    const entities = entitiesStmt.all();
-    const relations = relationsStmt.all();
-
-    return {
-      entities: entities.map(row => ({
-        name: row.name,
-        entityType: row.entity_type,
-        observations: row.observations ? JSON.parse(row.observations) : [],
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      })),
-      relations: relations.map(row => ({
-        from: row.from_entity,
-        to: row.to_entity,
-        relationType: row.relation_type,
-        createdAt: row.created_at
-      }))
-    };
+      return {
+        entities: entitiesResult.records.map(r => ({
+          name: r.get('name'),
+          entityType: r.get('entityType'),
+          observations: r.get('observations') || [],
+          createdAt: r.get('createdAt'),
+          updatedAt: r.get('updatedAt')
+        })),
+        relations: relationsResult.records.map(r => ({
+          from: r.get('fromEntity'),
+          to: r.get('toEntity'),
+          relationType: r.get('relationType'),
+          createdAt: r.get('createdAt')
+        }))
+      };
+    } finally {
+      await session.close();
+    }
   }
 
   async close(): Promise<void> {
-    if (this.db) {
-      this.db.close();
-      this.db = null;
+    if (this.connection) {
+      await this.connection.close();
+      this.connection = null;
     }
   }
 }

@@ -1,9 +1,9 @@
 /**
- * Rule Tools Configuration
+ * ContextISO Rule Tools Configuration
  * 
- * Defines the MCP tools for rule-specific functionality in the knowledge graph-based
- * memory system. These tools provide context detection, rule retrieval, and rule ingestion
- * capabilities for AI coding assistants.
+ * Defines the MCP tools for context optimization and rule management.
+ * These tools provide context detection, rule retrieval, and rule ingestion
+ * capabilities for bringing clarity to LLM context through targeted knowledge graphs.
  */
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';

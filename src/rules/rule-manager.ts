@@ -1,12 +1,16 @@
 /**
- * Rule Manager
+ * ContextISO Rule Manager (Neo4j Implementation)
  * 
- * Handles new rule-specific functionality for knowledge graph-based rule management.
- * This module provides context detection, rule retrieval, and ranking capabilities.
+ * Handles rule-specific functionality for context isolation and optimization.
+ * Provides context detection, rule retrieval, and ranking capabilities.
  */
 
-import Database from 'better-sqlite3';
 import { z } from 'zod';
+import { Neo4jConnection } from '../storage/neo4j-connection.js';
+import { Neo4jConfig } from '../config/neo4j-types.js';
+import { MarkdownParser } from '../parsing/markdown-parser.js';
+import { DirectiveExtractor } from '../parsing/directive-extractor.js';
+import { GraphBuilder } from '../parsing/graph-builder.js';
 
 // Schema definitions for rule operations
 const QueryDirectivesSchema = z.object({
@@ -45,92 +49,27 @@ export type DetectContextInput = z.infer<typeof DetectContextSchema>;
 export type UpsertMarkdownInput = z.infer<typeof UpsertMarkdownSchema>;
 
 /**
- * Rule Manager class that provides new rule-specific functionality
+ * Rule Manager class that provides new rule-specific functionality via Neo4j
  */
 export class RuleManager {
-  private db: Database.Database | null = null;
-  private dbPath: string;
+  private connection: Neo4jConnection | null = null;
+  private config: Neo4jConfig;
 
-  constructor(dbPath: string = './memory.db') {
-    this.dbPath = dbPath;
+  constructor(config: Neo4jConfig) {
+    this.config = config;
   }
 
   async initialize(): Promise<void> {
     try {
-      // Use the same database as memory manager for unified storage
-      this.db = new Database(this.dbPath);
-      
-      // Create rule-specific tables
-      this.createRuleTables();
-      
+      this.connection = new Neo4jConnection(this.config);
+      await this.connection.connect();
+      await this.connection.createSchema();
       console.error('Rule manager initialized successfully');
     } catch (error) {
-      throw new Error(`Failed to initialize rule manager: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to initialize rule manager: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
-  }
-
-  private createRuleTables(): void {
-    if (!this.db) {
-      throw new Error('Database not initialized');
-    }
-
-    // Rules table
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS rules (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        layer TEXT NOT NULL,
-        authoritative_for TEXT, -- JSON array
-        topics TEXT,            -- JSON array
-        severity TEXT NOT NULL,
-        when_to_apply TEXT,     -- JSON array
-        source_path TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Sections table
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS sections (
-        id TEXT PRIMARY KEY,
-        rule_id TEXT NOT NULL,
-        name TEXT NOT NULL,
-        content TEXT,
-        FOREIGN KEY (rule_id) REFERENCES rules(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Directives table
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS directives (
-        id TEXT PRIMARY KEY,
-        section_id TEXT NOT NULL,
-        text TEXT NOT NULL,
-        severity TEXT NOT NULL,
-        topics TEXT,            -- JSON array
-        layer TEXT,
-        when_to_apply TEXT,     -- JSON array
-        rationale TEXT,
-        examples TEXT,          -- JSON array of CodeExample
-        anti_patterns TEXT,     -- JSON array of CodeExample
-        source_rule_name TEXT,
-        source_section_name TEXT,
-        source_path TEXT,
-        embedding BLOB,         -- Vector embedding
-        FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Create indexes for performance
-    this.db.exec(`
-      CREATE INDEX IF NOT EXISTS idx_directives_topics ON directives(topics);
-      CREATE INDEX IF NOT EXISTS idx_directives_layer ON directives(layer);
-      CREATE INDEX IF NOT EXISTS idx_directives_severity ON directives(severity);
-      CREATE INDEX IF NOT EXISTS idx_rules_authoritative_for ON rules(authoritative_for);
-      CREATE INDEX IF NOT EXISTS idx_rules_layer ON rules(layer);
-      CREATE INDEX IF NOT EXISTS idx_rules_topics ON rules(topics);
-    `);
   }
 
   async handleTool(name: string, args: any): Promise<any> {
@@ -150,7 +89,7 @@ export class RuleManager {
     const params = QueryDirectivesSchema.parse(args);
     
     // For now, return a placeholder response
-    // This will be implemented in later tasks
+    // This will be implemented in later phases with full Cypher queries
     return {
       context_block: `# Contextual Rules for Task
 
@@ -193,25 +132,145 @@ export class RuleManager {
   private async upsertMarkdown(args: any): Promise<any> {
     const params = UpsertMarkdownSchema.parse(args);
     
-    // For now, return a placeholder response
-    // This will be implemented in later tasks
+    if (!this.connection) {
+      throw new Error('Connection not initialized');
+    }
+
+    const parser = new MarkdownParser();
+    const extractor = new DirectiveExtractor();
+    const graphBuilder = new GraphBuilder();
+
+    const totalStats = {
+      rules: 0,
+      sections: 0,
+      directives: 0,
+      patterns: 0
+    };
+    let totalRelations = 0;
+    const warnings: string[] = [];
+    const errors: string[] = [];
+
+    for (const doc of params.documents) {
+      try {
+        // Get markdown content
+        let content = doc.content;
+        if (!content) {
+          // If no content provided, try to read from file (not implemented yet)
+          warnings.push(`No content provided for ${doc.path}, skipping`);
+          continue;
+        }
+
+        // Parse markdown
+        const parsed = parser.parse(content);
+
+        // Extract directives
+        const extractionResult = extractor.extractFromSections(
+          parsed.sections,
+          parsed.metadata
+        );
+
+        // Add extraction warnings
+        warnings.push(...extractionResult.warnings);
+
+        // Build graph structure
+        const graphResult = graphBuilder.buildGraph(
+          parsed,
+          extractionResult.directives,
+          doc.path
+        );
+
+        // Add graph warnings and errors
+        warnings.push(...graphResult.warnings);
+        errors.push(...graphResult.errors);
+
+        // Validate graph
+        const validation = graphBuilder.validateGraph(graphResult.structure);
+        if (!validation.valid) {
+          errors.push(`Validation failed for ${doc.path}: ${validation.errors.join(', ')}`);
+          continue;
+        }
+
+        // If validateOnly, skip persistence
+        if (params.options.validateOnly) {
+          totalStats.rules += graphResult.stats.rulesCreated;
+          totalStats.sections += graphResult.stats.sectionsCreated;
+          totalStats.directives += graphResult.stats.directivesCreated;
+          totalRelations += graphResult.stats.relationshipsCreated;
+          continue;
+        }
+
+        // Check if rule already exists (if not overwrite)
+        if (!params.options.overwrite) {
+          const session = this.connection.getSession();
+          try {
+            const existing = await session.run(
+              'MATCH (r:Rule {sourcePath: $path}) RETURN r LIMIT 1',
+              { path: doc.path }
+            );
+
+            if (existing.records.length > 0) {
+              warnings.push(`Rule from ${doc.path} already exists, skipping (use overwrite: true to replace)`);
+              await session.close();
+              continue;
+            }
+          } finally {
+            await session.close();
+          }
+        } else {
+          // Delete existing rule and related nodes
+          const session = this.connection.getSession();
+          try {
+            await session.run(
+              'MATCH (r:Rule {sourcePath: $path}) DETACH DELETE r',
+              { path: doc.path }
+            );
+          } finally {
+            await session.close();
+          }
+        }
+
+        // Persist to Neo4j in a transaction
+        const session = this.connection.getSession();
+        try {
+          await session.executeWrite(async (tx) => {
+            const result = await graphBuilder.persistToNeo4j(
+              tx as any, // Type cast for compatibility
+              graphResult.structure
+            );
+
+            totalStats.rules += graphResult.stats.rulesCreated;
+            totalStats.sections += graphResult.stats.sectionsCreated;
+            totalStats.directives += graphResult.stats.directivesCreated;
+            totalRelations += result.relationshipsCreated;
+          });
+        } catch (error) {
+          errors.push(
+            `Failed to persist ${doc.path}: ${error instanceof Error ? error.message : String(error)}`
+          );
+        } finally {
+          await session.close();
+        }
+
+      } catch (error) {
+        errors.push(
+          `Failed to process ${doc.path}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    }
+
     return {
-      upserted: {
-        rules: 0,
-        sections: 0,
-        directives: 0,
-        patterns: 0
-      },
-      relations: 0,
-      warnings: [],
-      errors: []
+      upserted: totalStats,
+      relations: totalRelations,
+      warnings,
+      errors,
+      timestamp: new Date().toISOString()
     };
   }
 
   async close(): Promise<void> {
-    if (this.db) {
-      this.db.close();
-      this.db = null;
+    if (this.connection) {
+      await this.connection.close();
+      this.connection = null;
     }
   }
 }

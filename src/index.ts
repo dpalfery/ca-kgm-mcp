@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Knowledge Graph Memory MCP Server
+ * ContextISO - Context Isolation & Optimization
  * 
- * Extended Memory MCP server with knowledge graph-based rule management capabilities.
- * Provides both original Memory MCP functionality and new rule-specific tools.
+ * Brings context into clarity for LLMs by targeting and isolating relevant knowledge.
+ * Provides memory management and rule-based context optimization through a knowledge graph.
+ * 
+ * Backend: Neo4j Aura cloud database
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -20,14 +22,15 @@ import { MemoryManager } from './memory/memory-manager.js';
 import { RuleManager } from './rules/rule-manager.js';
 import { setupMemoryTools } from './memory/memory-tools.js';
 import { setupRuleTools } from './rules/rule-tools.js';
+import { loadNeo4jConfig } from './config/neo4j-config.js';
 
-const SERVER_NAME = 'knowledge-graph-memory-mcp';
+const SERVER_NAME = 'context-iso';
 const SERVER_VERSION = '1.0.0';
 
 /**
- * Main server class that extends Memory MCP with rule management capabilities
+ * ContextISO Server - Brings context into clarity for LLMs
  */
-class KnowledgeGraphMemoryServer {
+class ContextISOServer {
   private server: Server;
   private memoryManager: MemoryManager;
   private ruleManager: RuleManager;
@@ -45,12 +48,15 @@ class KnowledgeGraphMemoryServer {
       }
     );
 
-    this.memoryManager = new MemoryManager();
-    this.ruleManager = new RuleManager();
+    // Load Neo4j configuration from environment
+    const config = loadNeo4jConfig();
+    
+    this.memoryManager = new MemoryManager(config);
+    this.ruleManager = new RuleManager(config);
   }
 
   async initialize(): Promise<void> {
-    // Initialize memory manager (original Memory MCP functionality)
+    // Initialize memory manager (context storage and retrieval)
     await this.memoryManager.initialize();
     
     // Initialize rule manager (new rule-specific functionality)
@@ -104,7 +110,7 @@ class KnowledgeGraphMemoryServer {
   }
 
   private async handleMemoryTool(name: string, args: any): Promise<any> {
-    // Delegate to memory manager for original Memory MCP functionality
+    // Delegate to memory manager for context operations
     return await this.memoryManager.handleTool(name, args);
   }
 
@@ -118,13 +124,13 @@ class KnowledgeGraphMemoryServer {
     await this.server.connect(transport);
     
     console.error(`${SERVER_NAME} v${SERVER_VERSION} started`);
-    console.error('Server capabilities: Memory MCP + Rule Management');
+    console.error('Server capabilities: ContextISO - Context Isolation & Optimization');
   }
 }
 
 // Start the server
 async function main(): Promise<void> {
-  const server = new KnowledgeGraphMemoryServer();
+  const server = new ContextISOServer();
   
   try {
     await server.initialize();
@@ -153,4 +159,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   });
 }
 
-export { KnowledgeGraphMemoryServer };
+export { ContextISOServer };
