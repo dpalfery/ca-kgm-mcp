@@ -1,52 +1,57 @@
 /**
- * Scoring Engine for Rule Ranking
+ * Scoring & Ranking Engine (Phase 3)
  * 
- * Implements sophisticated scoring algorithm to rank directives based on:
- * - Severity (MUST > SHOULD > MAY)
- * - Relevance (exact match > keyword match > fuzzy)
- * - Layer matching (exact > adjacent > distant)
- * - Topic matching
- * - Technology matching
- * - Authoritativeness
+ * Implements intelligent rule ranking with:
+ * - Weighted multi-factor scoring algorithm
+ * - Severity-based prioritization
+ * - Token budget management
+ * - Mode-based adjustments (architect, code, debug)
  */
 
 export interface ScoringWeights {
-  severity: number;           // 0-1, default 0.30
-  relevance: number;          // 0-1, default 0.25
-  layerMatch: number;         // 0-1, default 0.20
-  topicMatch: number;         // 0-1, default 0.15
-  techMatch: number;          // 0-1, default 0.05
-  authoritativeness: number;  // 0-1, default 0.05
+  severity: number;         // 0.30
+  relevance: number;        // 0.25
+  layerMatch: number;       // 0.20
+  topicMatch: number;       // 0.15
+  authoritativeness: number; // 0.10
 }
 
-export interface DirectiveForScoring {
+export interface ScoredDirective {
   id: string;
-  text: string;
+  content: string;
   severity: 'MUST' | 'SHOULD' | 'MAY';
   topics: string[];
   layers: string[];
   technologies: string[];
-  authoritative?: boolean;
-  section?: string;
+  section: string;
+  sourcePath: string;
+  
+  // Scoring fields
+  severityScore: number;
+  relevanceScore: number;
+  layerScore: number;
+  topicScore: number;
+  authorityScore: number;
+  totalScore: number;  // 0-1 normalized
 }
 
-export interface ScoringContext {
-  detectedLayer?: string;
-  topics: string[];
-  technologies: string[];
-  keywords?: string[];
-}
-
-export interface ScoredDirective extends DirectiveForScoring {
-  score: number;
-  scoreBreakdown: {
-    severity: number;
-    relevance: number;
-    layerMatch: number;
-    topicMatch: number;
-    techMatch: number;
-    authoritativeness: number;
-  };
+export interface RankingInput {
+  detectedLayer: string;
+  detectedTopics: string[];
+  detectedTechnologies: string[];
+  directives: Array<{
+    id: string;
+    content: string;
+    severity: 'MUST' | 'SHOULD' | 'MAY';
+    topics: string[];
+    layers: string[];
+    technologies: string[];
+    section: string;
+    sourcePath: string;
+  }>;
+  mode?: 'architect' | 'code' | 'debug';
+  maxItems?: number;
+  tokenBudget?: number;
 }
 
 const DEFAULT_WEIGHTS: ScoringWeights = {
@@ -54,79 +59,100 @@ const DEFAULT_WEIGHTS: ScoringWeights = {
   relevance: 0.25,
   layerMatch: 0.20,
   topicMatch: 0.15,
-  techMatch: 0.05,
-  authoritativeness: 0.05
+  authoritativeness: 0.10
 };
 
-// Layer hierarchy for adjacency calculation
-const LAYER_ORDER = [
-  '1-Presentation',
-  '2-Application',
-  '3-Domain',
-  '4-Persistence',
-  '5-Integration',
-  '6-Tests',
-  '7-Infrastructure'
-];
+const MODE_ADJUSTMENTS: Record<string, Record<string, number>> = {
+  architect: {
+    'architecture': 1.5,
+    'pattern': 1.5,
+    '1-Presentation': 0.8,
+    '7-Deployment': 0.8
+  },
+  code: {
+    'testing': 1.3,
+    'performance': 1.1,
+    'implementation': 1.2,
+    '3-Domain': 1.2,
+    '4-Persistence': 1.1
+  },
+  debug: {
+    'error': 1.5,
+    'logging': 1.3,
+    'testing': 1.2,
+    'performance': 0.8
+  }
+};
 
 export class ScoringEngine {
-  private weights: ScoringWeights;
-
-  constructor(weights: Partial<ScoringWeights> = {}) {
-    this.weights = { ...DEFAULT_WEIGHTS, ...weights };
-    this.validateWeights();
-  }
-
-  private validateWeights(): void {
-    const sum = Object.values(this.weights).reduce((a, b) => a + b, 0);
-    if (Math.abs(sum - 1.0) > 0.01) {
-      throw new Error(`Scoring weights must sum to 1.0, got ${sum}`);
-    }
-  }
-
   /**
-   * Score a single directive based on the context
+   * Score a single directive based on multiple factors
    */
-  scoreDirective(directive: DirectiveForScoring, context: ScoringContext): ScoredDirective {
-    const breakdown = {
-      severity: this.calculateSeverityScore(directive.severity),
-      relevance: this.calculateRelevanceScore(directive, context),
-      layerMatch: this.calculateLayerScore(directive.layers, context.detectedLayer),
-      topicMatch: this.calculateTopicScore(directive.topics, context.topics),
-      techMatch: this.calculateTechScore(directive.technologies, context.technologies),
-      authoritativeness: directive.authoritative ? 100 : 0
-    };
-
-    const totalScore = (
-      breakdown.severity * this.weights.severity +
-      breakdown.relevance * this.weights.relevance +
-      breakdown.layerMatch * this.weights.layerMatch +
-      breakdown.topicMatch * this.weights.topicMatch +
-      breakdown.techMatch * this.weights.techMatch +
-      breakdown.authoritativeness * this.weights.authoritativeness
+  static scoreDirective(
+    directive: RankingInput['directives'][0],
+    input: {
+      detectedLayer: string;
+      detectedTopics: string[];
+      detectedTechnologies: string[];
+      mode?: 'architect' | 'code' | 'debug';
+    },
+    weights: ScoringWeights = DEFAULT_WEIGHTS
+  ): ScoredDirective {
+    // Calculate individual scores
+    const severityScore = this.calculateSeverityScore(directive.severity);
+    const relevanceScore = this.calculateRelevanceScore(
+      directive.content,
+      input.detectedLayer
     );
+    const layerScore = this.calculateLayerScore(
+      directive.layers,
+      input.detectedLayer
+    );
+    const topicScore = this.calculateTopicScore(
+      directive.topics,
+      input.detectedTopics
+    );
+    const authorityScore = this.calculateAuthorityScore(
+      directive.severity,
+      directive.section
+    );
+
+    // Apply weighted combination
+    let totalScore = (
+      severityScore * weights.severity +
+      relevanceScore * weights.relevance +
+      layerScore * weights.layerMatch +
+      topicScore * weights.topicMatch +
+      authorityScore * weights.authoritativeness
+    );
+
+    // Normalize to 0-1 range
+    totalScore = Math.min(totalScore / 100, 1.0);
+
+    // Apply mode adjustments
+    if (input.mode) {
+      totalScore = this.applyModeAdjustment(
+        totalScore,
+        directive,
+        input.mode as 'architect' | 'code' | 'debug'
+      );
+    }
 
     return {
       ...directive,
-      score: totalScore / 100, // Normalize to 0-1
-      scoreBreakdown: breakdown
+      severityScore,
+      relevanceScore,
+      layerScore,
+      topicScore,
+      authorityScore,
+      totalScore
     };
   }
 
   /**
-   * Score multiple directives and sort by score
+   * Calculate severity score (MUST=100, SHOULD=50, MAY=25)
    */
-  scoreDirectives(directives: DirectiveForScoring[], context: ScoringContext): ScoredDirective[] {
-    return directives
-      .map(d => this.scoreDirective(d, context))
-      .sort((a, b) => b.score - a.score);
-  }
-
-  /**
-   * Calculate severity score
-   * MUST = 100, SHOULD = 50, MAY = 25
-   */
-  private calculateSeverityScore(severity: 'MUST' | 'SHOULD' | 'MAY'): number {
+  private static calculateSeverityScore(severity: string): number {
     switch (severity) {
       case 'MUST':
         return 100;
@@ -140,185 +166,156 @@ export class ScoringEngine {
   }
 
   /**
-   * Calculate relevance score based on keyword matching
-   * Exact match = 100, Keyword match = 60, Fuzzy match = 30
+   * Calculate relevance score based on content match
    */
-  private calculateRelevanceScore(directive: DirectiveForScoring, context: ScoringContext): number {
-    if (!context.keywords || context.keywords.length === 0) {
-      return 50; // Default medium relevance if no keywords
+  private static calculateRelevanceScore(content: string, layer: string): number {
+    const contentLength = content.length;
+    const relevanceBase = Math.min(contentLength / 100, 1) * 50; // Max 50 points
+
+    // Bonus if layer mentioned in content
+    if (layer !== '*' && content.toLowerCase().includes(layer.toLowerCase())) {
+      return Math.min(relevanceBase + 25, 100);
     }
 
-    const directiveText = directive.text.toLowerCase();
-    let maxScore = 0;
-
-    for (const keyword of context.keywords) {
-      const keywordLower = keyword.toLowerCase();
-      
-      // Exact phrase match
-      if (directiveText.includes(keywordLower)) {
-        maxScore = Math.max(maxScore, 100);
-      }
-      // Word-level match
-      else if (this.hasWordMatch(directiveText, keywordLower)) {
-        maxScore = Math.max(maxScore, 60);
-      }
-      // Fuzzy match (contains parts of the keyword)
-      else if (this.hasFuzzyMatch(directiveText, keywordLower)) {
-        maxScore = Math.max(maxScore, 30);
-      }
-    }
-
-    return maxScore;
+    return relevanceBase;
   }
 
   /**
    * Calculate layer matching score
-   * Exact match = 100, Adjacent = 50, Distant = 10, Wildcard = 40
    */
-  private calculateLayerScore(directiveLayers: string[], detectedLayer?: string): number {
-    if (!detectedLayer || detectedLayer === '*') {
-      return 40; // Default for wildcard/unknown layer
+  private static calculateLayerScore(
+    directiveLayers: string[],
+    detectedLayer: string
+  ): number {
+    if (detectedLayer === '*' || directiveLayers.length === 0) {
+      return 25; // Default score for wildcard
     }
 
-    if (directiveLayers.length === 0) {
-      return 40; // No layer specified, give default score
+    // Exact match
+    if (directiveLayers.includes(detectedLayer)) {
+      return 100;
     }
 
-    let maxScore = 0;
-    const detectedIndex = LAYER_ORDER.indexOf(detectedLayer);
-
+    // Adjacent layer (difference of 1)
+    const detectedNum = parseInt(detectedLayer.split('-')[0]);
     for (const layer of directiveLayers) {
-      if (layer === '*') {
-        maxScore = Math.max(maxScore, 40);
-        continue;
-      }
-
-      if (layer === detectedLayer) {
-        return 100; // Exact match, return immediately
-      }
-
-      const layerIndex = LAYER_ORDER.indexOf(layer);
-      if (layerIndex === -1 || detectedIndex === -1) {
-        continue;
-      }
-
-      const distance = Math.abs(layerIndex - detectedIndex);
-      if (distance === 1) {
-        maxScore = Math.max(maxScore, 50); // Adjacent layer
-      } else if (distance === 2) {
-        maxScore = Math.max(maxScore, 30); // Close layer
-      } else {
-        maxScore = Math.max(maxScore, 10); // Distant layer
+      const layerNum = parseInt(layer.split('-')[0]);
+      if (Math.abs(detectedNum - layerNum) === 1) {
+        return 50;
       }
     }
 
-    return maxScore;
+    // Different layer
+    return 10;
   }
 
   /**
    * Calculate topic matching score
-   * Per topic matched: +20 points (max 100)
    */
-  private calculateTopicScore(directiveTopics: string[], contextTopics: string[]): number {
-    if (contextTopics.length === 0 || directiveTopics.length === 0) {
-      return 0;
+  private static calculateTopicScore(
+    directiveTopics: string[],
+    detectedTopics: string[]
+  ): number {
+    if (directiveTopics.length === 0 || detectedTopics.length === 0) {
+      return 25;
     }
 
-    const matches = directiveTopics.filter(dt => 
-      contextTopics.some(ct => ct.toLowerCase() === dt.toLowerCase())
-    ).length;
-
-    return Math.min(matches * 20, 100);
-  }
-
-  /**
-   * Calculate technology matching score
-   * Per technology matched: +25 points (max 100)
-   */
-  private calculateTechScore(directiveTech: string[], contextTech: string[]): number {
-    if (contextTech.length === 0 || directiveTech.length === 0) {
-      return 0;
+    let matches = 0;
+    for (const topic of directiveTopics) {
+      if (detectedTopics.includes(topic)) {
+        matches++;
+      }
     }
 
-    const matches = directiveTech.filter(dt => 
-      contextTech.some(ct => ct.toLowerCase() === dt.toLowerCase())
-    ).length;
-
-    return Math.min(matches * 25, 100);
+    // Score based on percentage of matches
+    return (matches / Math.max(directiveTopics.length, detectedTopics.length)) * 100;
   }
 
   /**
-   * Check if text contains keyword as a complete word
+   * Calculate authoritativeness score (based on section and severity)
    */
-  private hasWordMatch(text: string, keyword: string): boolean {
-    const words = text.split(/\s+/);
-    return words.some(word => word.includes(keyword));
-  }
+  private static calculateAuthorityScore(severity: string, section: string): number {
+    let score = 30; // Base score
 
-  /**
-   * Check if text contains parts of the keyword (fuzzy match)
-   */
-  private hasFuzzyMatch(text: string, keyword: string): boolean {
-    if (keyword.length < 4) return false; // Don't fuzzy match short keywords
-    
-    const parts = keyword.split(/[-_\s]/);
-    return parts.some(part => part.length >= 3 && text.includes(part));
-  }
+    // Bonus for critical sections
+    const criticalKeywords = [
+      'security', 'authentication', 'authorization',
+      'database', 'transaction', 'performance',
+      'deployment', 'production'
+    ];
 
-  /**
-   * Apply mode-specific scoring adjustments
-   */
-  applyModeAdjustments(
-    scoredDirectives: ScoredDirective[],
-    mode?: 'architect' | 'code' | 'debug'
-  ): ScoredDirective[] {
-    if (!mode) return scoredDirectives;
-
-    const modeAdjustments = this.getModeAdjustments(mode);
-
-    return scoredDirectives.map(directive => {
-      let adjustment = 1.0;
-
-      for (const topic of directive.topics) {
-        const topicAdjustment = modeAdjustments[topic.toLowerCase()];
-        if (topicAdjustment) {
-          adjustment = Math.max(adjustment, topicAdjustment);
-        }
+    for (const keyword of criticalKeywords) {
+      if (section.toLowerCase().includes(keyword)) {
+        score += 20;
+        break;
       }
+    }
 
-      return {
-        ...directive,
-        score: Math.min(directive.score * adjustment, 1.0) // Cap at 1.0
-      };
-    }).sort((a, b) => b.score - a.score);
+    // Bonus for MUST severity
+    if (severity === 'MUST') {
+      score += 20;
+    }
+
+    return Math.min(score, 100);
   }
 
-  private getModeAdjustments(mode: 'architect' | 'code' | 'debug'): Record<string, number> {
-    const adjustments = {
-      architect: {
-        'architecture': 1.5,
-        'design-pattern': 1.5,
-        'design': 1.5,
-        'scalability': 1.2,
-        'testing': 0.8,
-        'documentation': 1.1
-      },
-      code: {
-        'coding-standard': 1.5,
-        'testing': 1.3,
-        'performance': 1.1,
-        'architecture': 0.8,
-        'code-quality': 1.4
-      },
-      debug: {
-        'error-handling': 1.5,
-        'logging': 1.3,
-        'testing': 1.2,
-        'documentation': 0.8,
-        'debugging': 1.5
-      }
-    };
+  /**
+   * Apply mode-based scoring adjustments
+   */
+  private static applyModeAdjustment(
+    baseScore: number,
+    directive: RankingInput['directives'][0],
+    mode: 'architect' | 'code' | 'debug'
+  ): number {
+    const adjustments = MODE_ADJUSTMENTS[mode] || {};
 
-    return adjustments[mode];
+    let multiplier = 1.0;
+
+    // Check for mode-specific keywords
+    for (const [keyword, adjustment] of Object.entries(adjustments)) {
+      const searchText = `${directive.content} ${directive.topics.join(' ')} ${directive.section}`.toLowerCase();
+      if (searchText.includes(keyword.toLowerCase())) {
+        multiplier *= adjustment;
+      }
+    }
+
+    // Ensure result stays in 0-1 range
+    return Math.min(baseScore * multiplier, 1.0);
+  }
+}
+
+/**
+ * Token Counter for budget management
+ */
+export class TokenCounter {
+  /**
+   * Estimate tokens in text (rough: 1 token ≈ 4 characters)
+   */
+  static estimateTokens(text: string): number {
+    return Math.ceil(text.length / 4);
+  }
+
+  /**
+   * Select directives that fit within token budget
+   */
+  static selectWithinBudget(
+    directives: ScoredDirective[],
+    budget: number
+  ): { selected: ScoredDirective[]; totalTokens: number } {
+    const selected: ScoredDirective[] = [];
+    let totalTokens = 0;
+
+    for (const directive of directives) {
+      const directiveTokens = this.estimateTokens(directive.content) + 50; // Add overhead
+
+      if (totalTokens + directiveTokens <= budget) {
+        selected.push(directive);
+        totalTokens += directiveTokens;
+      } else {
+        break; // Stop when budget exceeded
+      }
+    }
+
+    return { selected, totalTokens };
   }
 }
