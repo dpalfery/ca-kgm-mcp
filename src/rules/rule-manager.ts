@@ -8,6 +8,9 @@
 import { z } from 'zod';
 import { Neo4jConnection } from '../storage/neo4j-connection.js';
 import { Neo4jConfig } from '../config/neo4j-types.js';
+import { detectLayer } from '../detection/layer-detector.js';
+import { detectTechnologies } from '../detection/tech-detector.js';
+import { detectTopics } from '../detection/topic-detector.js';
 
 // Schema definitions for rule operations
 const QueryDirectivesSchema = z.object({
@@ -85,28 +88,49 @@ export class RuleManager {
   private async queryDirectives(args: any): Promise<any> {
     const params = QueryDirectivesSchema.parse(args);
     
-    // For now, return a placeholder response
-    // This will be implemented in later phases with full Cypher queries
-    return {
-      context_block: `# Contextual Rules for Task
+    // Detect context from task description
+    const context = await this.detectContext({
+      text: params.taskDescription,
+      options: {
+        returnKeywords: false,
+        confidenceThreshold: 0.5
+      }
+    });
+    
+    // Build context block with detected information
+    const contextBlock = `# Contextual Rules for Task
 
-**Detected Context**: Placeholder detection
+**Detected Context:**
+- Layer: ${context.detectedLayer}
+- Confidence: ${(context.confidence * 100).toFixed(0)}%
+- Topics: ${context.topics.length > 0 ? context.topics.join(', ') : 'none detected'}
+- Technologies: ${context.technologies.length > 0 ? context.technologies.join(', ') : 'none detected'}
+
+## Task
+${params.taskDescription}
 
 ## Key Directives
 
-- **[MUST]** This is a placeholder directive for task: "${params.taskDescription}"
-  - *Applies to: general*
-  - *Source: Placeholder Rule → General Section*
+*Note: Full rule retrieval and ranking will be implemented in Phase 3*
 
-`,
+- **[MUST]** Follow the architectural patterns appropriate for ${context.detectedLayer} layer
+- **[SHOULD]** Apply best practices for detected topics: ${context.topics.slice(0, 3).join(', ')}
+${context.technologies.length > 0 ? `- **[SHOULD]** Use ${context.technologies[0]} best practices and conventions` : ''}
+
+`;
+
+    return {
+      context_block: contextBlock,
       citations: [],
       diagnostics: {
-        detectedLayer: '*',
-        topics: ['general'],
+        detectedLayer: context.detectedLayer,
+        confidence: context.confidence,
+        topics: context.topics,
+        technologies: context.technologies,
         retrievalStats: {
           searched: 0,
           considered: 0,
-          selected: 1
+          selected: 3
         }
       }
     };
@@ -115,15 +139,52 @@ export class RuleManager {
   private async detectContext(args: any): Promise<any> {
     const params = DetectContextSchema.parse(args);
     
-    // For now, return a placeholder response
-    // This will be implemented in later tasks
-    return {
-      detectedLayer: '*',
-      topics: ['general'],
-      keywords: params.options.returnKeywords ? ['placeholder'] : undefined,
-      confidence: 0.5,
-      alternativeContexts: []
+    // Detect layer using layer-detector
+    const layerResult = detectLayer(params.text, {
+      confidenceThreshold: params.options.confidenceThreshold,
+      returnAlternatives: true
+    });
+
+    // Detect technologies
+    const techResults = detectTechnologies(params.text);
+    const technologies = techResults.map(t => t.name);
+
+    // Detect topics
+    const topicResults = detectTopics(params.text);
+    const topics = topicResults.map(t => t.topic);
+
+    // Build response
+    const response: any = {
+      detectedLayer: layerResult.layer,
+      confidence: layerResult.confidence,
+      topics: topics,
+      technologies: technologies,
+      timestamp: new Date().toISOString()
     };
+
+    // Add keywords if requested
+    if (params.options.returnKeywords) {
+      // Extract significant words from text
+      const words = params.text.toLowerCase()
+        .split(/\s+/)
+        .filter(w => w.length > 3)
+        .slice(0, 10);
+      response.keywords = words;
+    }
+
+    // Add alternative contexts
+    if (layerResult.alternatives && layerResult.alternatives.length > 0) {
+      response.alternativeContexts = layerResult.alternatives.map(alt => ({
+        layer: alt.layer,
+        confidence: alt.confidence,
+        topics: topics,
+        technologies: technologies
+      }));
+    } else {
+      response.alternativeContexts = [];
+    }
+
+    return response;
   }
 
   private async upsertMarkdown(args: any): Promise<any> {
