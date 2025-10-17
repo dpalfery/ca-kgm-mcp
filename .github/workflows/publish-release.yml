@@ -1,0 +1,185 @@
+name: Publish Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish-type:
+        description: 'Type of release'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run all tests
+        run: npm run test:all
+
+      - name: Build package
+        run: npm run build
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          npm install -g conventional-changelog-cli 2>/dev/null || true
+          CHANGELOG=$(git log --oneline --no-decorate $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD 2>/dev/null | head -20)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Determine version bump
+        id: version
+        run: |
+          CURRENT_VERSION=$(npm pkg get version | tr -d '"')
+          PUBLISH_TYPE="${{ github.event.inputs.publish-type || 'patch' }}"
+          
+          echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "publish-type=$PUBLISH_TYPE" >> $GITHUB_OUTPUT
+          echo "📦 Current version: $CURRENT_VERSION"
+          echo "📈 Release type: $PUBLISH_TYPE"
+
+      - name: Publish to npm
+        run: |
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.current-version }}
+          release_name: Release v${{ steps.version.outputs.current-version }}
+          body: |
+            # Release v${{ steps.version.outputs.current-version }}
+            
+            ## What's New
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ## Package Information
+            - **Package**: context-iso
+            - **Version**: ${{ steps.version.outputs.current-version }}
+            - **Registry**: https://www.npmjs.com/package/context-iso
+            - **Release Type**: ${{ steps.version.outputs.publish-type }}
+            
+            ## Installation
+            ```bash
+            npm install context-iso@${{ steps.version.outputs.current-version }}
+            ```
+            
+            ## Documentation
+            - [README](./README.md)
+            - [Documentation](./6-Docs)
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.publish-type, 'prerelease') }}
+
+      - name: Update release documentation
+        run: |
+          echo "## Latest Release" > RELEASE_INFO.md
+          echo "" >> RELEASE_INFO.md
+          echo "**Version**: v${{ steps.version.outputs.current-version }}" >> RELEASE_INFO.md
+          echo "**Published**: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> RELEASE_INFO.md
+          echo "**Type**: ${{ steps.version.outputs.publish-type }}" >> RELEASE_INFO.md
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-release-${{ steps.version.outputs.current-version }}
+          path: |
+            dist/
+            package.json
+            RELEASE_INFO.md
+          retention-days: 30
+
+      - name: Post publish status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ job.status }}';
+            const version = '${{ steps.version.outputs.current-version }}';
+            const releaseType = '${{ steps.version.outputs.publish-type }}';
+            
+            const message = status === 'success'
+              ? `🎉 Published to npm! Version: v${version} (${releaseType}). Install with: npm install context-iso@${version}`
+              : `❌ Publish failed. Check workflow logs for details.`;
+            
+            console.log(message);
+
+  post-publish:
+    needs: publish
+    if: success()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Notify Slack
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "context-iso npm package published! 🎉",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*context-iso* npm package published successfully!\\n*Build:* ${{ github.run_id }}\\n*Commit:* ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        continue-on-error: true
+
+      - name: Send email notification
+        if: env.NOTIFICATION_EMAIL != ''
+        run: echo "Email notification would be sent to"
+        env:
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+        continue-on-error: true

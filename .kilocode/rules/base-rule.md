@@ -16,7 +16,7 @@ Task‑Start Requirements (must perform before changes)
 - Ensure build compiles with zero warnings and required tests pass or are added. ([`​.kilocode/rules/code-quality-general-rule.md`](.kilocode/rules/code-quality-general-rule.md:1))
 
 Situational Rule Pointers (consult only when relevant)
-- Security & Secrets: input validation, SQL param rules, secrets management → [`​.kilocode/rules/security-general-rule.md`](.kilocode/rules/security-general-rule.md:1)  
+
 - File placement & architecture decisions: when creating/moving files or enforcing layer boundaries → [`​.kilocode/rules/architecture-general.md`](.kilocode/rules/architecture-general.md:1)  
 - Build, logging, error handling, CI quality gates → [`​.kilocode/rules/code-quality-general-rule.md`](.kilocode/rules/code-quality-general-rule.md:1)  
 - Tests & coverage requirements: when adding/updating tests or measuring coverage → [`​.kilocode/rules/testing-general-rule.md`](.kilocode/rules/testing-general-rule.md:1)  
