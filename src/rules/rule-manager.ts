@@ -11,6 +11,9 @@ import { Neo4jConfig } from '../config/neo4j-types.js';
 import { MarkdownParser } from '../parsing/markdown-parser.js';
 import { DirectiveExtractor } from '../parsing/directive-extractor.js';
 import { GraphBuilder } from '../parsing/graph-builder.js';
+import { RankingEngine } from '../ranking/ranking-engine.js';
+import { ScoringEngine } from '../ranking/scoring-engine.js';
+import { TokenCounter } from '../ranking/token-counter.js';
 
 // Schema definitions for rule operations
 const QueryDirectivesSchema = z.object({
@@ -54,9 +57,11 @@ export type UpsertMarkdownInput = z.infer<typeof UpsertMarkdownSchema>;
 export class RuleManager {
   private connection: Neo4jConnection | null = null;
   private config: Neo4jConfig;
+  private rankingEngine: RankingEngine;
 
   constructor(config: Neo4jConfig) {
     this.config = config;
+    this.rankingEngine = new RankingEngine(new ScoringEngine(), new TokenCounter());
   }
 
   async initialize(): Promise<void> {
@@ -88,38 +93,90 @@ export class RuleManager {
   private async queryDirectives(args: any): Promise<any> {
     const params = QueryDirectivesSchema.parse(args);
     
-    // For now, return a placeholder response
-    // This will be implemented in later phases with full Cypher queries
-    return {
-      context_block: `# Contextual Rules for Task
+    if (!this.connection) {
+      throw new Error('Connection not initialized');
+    }
 
-**Detected Context**: Placeholder detection
-
-## Key Directives
-
-- **[MUST]** This is a placeholder directive for task: "${params.taskDescription}"
-  - *Applies to: general*
-  - *Source: Placeholder Rule → General Section*
-
-`,
-      citations: [],
-      diagnostics: {
-        detectedLayer: '*',
-        topics: ['general'],
-        retrievalStats: {
-          searched: 0,
-          considered: 0,
-          selected: 1
-        }
+    // Use detectContext for now (will be enhanced in Phase 2)
+    const contextResult = await this.detectContext({
+      text: params.taskDescription,
+      options: {
+        returnKeywords: true,
+        confidenceThreshold: 0.5
       }
-    };
+    });
+
+    // Query and rank directives using the ranking engine
+    const session = this.connection.getSession();
+    try {
+      // Build ranking options
+      const rankingOptions: any = {
+        maxItems: params.options.maxItems || 8,
+        tokenBudget: params.options.tokenBudget || 1000
+      };
+      
+      if (params.options.severityFilter) {
+        rankingOptions.severityFilter = params.options.severityFilter;
+      }
+      if (params.options.strictLayer !== undefined) {
+        rankingOptions.strictLayer = params.options.strictLayer;
+      }
+      if (params.modeSlug) {
+        rankingOptions.mode = params.modeSlug;
+      }
+
+      const rankingResult = await this.rankingEngine.queryAndRank(
+        session,
+        {
+          detectedLayer: contextResult.detectedLayer,
+          topics: contextResult.topics,
+          technologies: [], // Will be populated in Phase 2
+          keywords: contextResult.keywords
+        },
+        rankingOptions
+      );
+
+      // Format the context block
+      const contextBlock = this.formatContextBlock(
+        rankingResult.directives,
+        contextResult,
+        params.options.includeBreadcrumbs ?? true
+      );
+
+      // Generate citations
+      const citations = rankingResult.directives.map(d => ({
+        directiveId: d.id,
+        source: d.section || 'Unknown',
+        severity: d.severity
+      }));
+
+      return {
+        context_block: contextBlock,
+        citations,
+        diagnostics: {
+          detectedLayer: contextResult.detectedLayer,
+          topics: contextResult.topics,
+          retrievalStats: {
+            searched: rankingResult.stats.searched,
+            considered: rankingResult.stats.considered,
+            selected: rankingResult.stats.selected
+          },
+          tokenStats: {
+            totalTokens: rankingResult.stats.totalTokens,
+            budgetRemaining: rankingResult.stats.budgetRemaining
+          }
+        }
+      };
+    } finally {
+      await session.close();
+    }
   }
 
   private async detectContext(args: any): Promise<any> {
     const params = DetectContextSchema.parse(args);
     
     // For now, return a placeholder response
-    // This will be implemented in later tasks
+    // This will be implemented in Phase 2 with full context detection
     return {
       detectedLayer: '*',
       topics: ['general'],
@@ -127,6 +184,79 @@ export class RuleManager {
       confidence: 0.5,
       alternativeContexts: []
     };
+  }
+
+  /**
+   * Format directives into a markdown context block
+   */
+  private formatContextBlock(
+    directives: any[],
+    context: any,
+    includeBreadcrumbs: boolean
+  ): string {
+    const grouped = this.rankingEngine.groupBySeverity(directives);
+    
+    let block = '# Contextual Rules\n\n';
+    
+    // Add detected context info
+    block += '**Detected Context:**\n';
+    block += `- Layer: ${context.detectedLayer}\n`;
+    block += `- Topics: ${context.topics.join(', ')}\n`;
+    if (context.keywords && context.keywords.length > 0) {
+      block += `- Keywords: ${context.keywords.join(', ')}\n`;
+    }
+    block += '\n';
+
+    // Add MUST directives
+    if (grouped.MUST.length > 0) {
+      block += '## Critical (MUST) Directives\n\n';
+      for (const directive of grouped.MUST) {
+        block += `### ${directive.section || 'General'}\n`;
+        block += `- **[MUST]** ${directive.text}\n`;
+        block += `  *Applies to: ${directive.topics.join(', ') || 'general'}*\n`;
+        if (includeBreadcrumbs && directive.section) {
+          block += `  *Source: ${directive.section}*\n`;
+        }
+        block += `  *Score: ${(directive.score * 100).toFixed(1)}%*\n`;
+        block += '\n';
+      }
+    }
+
+    // Add SHOULD directives
+    if (grouped.SHOULD.length > 0) {
+      block += '## Recommended (SHOULD) Directives\n\n';
+      for (const directive of grouped.SHOULD) {
+        block += `### ${directive.section || 'General'}\n`;
+        block += `- **[SHOULD]** ${directive.text}\n`;
+        block += `  *Applies to: ${directive.topics.join(', ') || 'general'}*\n`;
+        if (includeBreadcrumbs && directive.section) {
+          block += `  *Source: ${directive.section}*\n`;
+        }
+        block += `  *Score: ${(directive.score * 100).toFixed(1)}%*\n`;
+        block += '\n';
+      }
+    }
+
+    // Add MAY directives
+    if (grouped.MAY.length > 0) {
+      block += '## Optional (MAY) Directives\n\n';
+      for (const directive of grouped.MAY) {
+        block += `### ${directive.section || 'General'}\n`;
+        block += `- **[MAY]** ${directive.text}\n`;
+        block += `  *Applies to: ${directive.topics.join(', ') || 'general'}*\n`;
+        if (includeBreadcrumbs && directive.section) {
+          block += `  *Source: ${directive.section}*\n`;
+        }
+        block += `  *Score: ${(directive.score * 100).toFixed(1)}%*\n`;
+        block += '\n';
+      }
+    }
+
+    // Add summary
+    block += '---\n';
+    block += `**Retrieved:** ${directives.length} directive(s)\n`;
+
+    return block;
   }
 
   private async upsertMarkdown(args: any): Promise<any> {
