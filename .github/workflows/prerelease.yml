@@ -1,0 +1,148 @@
+name: Pre-Release to Develop
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      prerelease-tag:
+        description: 'Pre-release tag (alpha, beta, rc)'
+        required: true
+        default: 'beta'
+        type: choice
+        options:
+          - alpha
+          - beta
+          - rc
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  prerelease:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run all tests
+        run: npm run test:all
+
+      - name: Build package
+        run: npm run build
+
+      - name: Verify TypeScript declarations
+        run: |
+          test -f dist/index.d.ts && echo "✓ Declaration files generated" || (echo "✗ Missing declaration files" && exit 1)
+
+      - name: Check for vulnerabilities
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Generate SBOM
+        run: npm ls --production > SBOM.txt
+        continue-on-error: true
+
+      - name: Determine prerelease version
+        id: prerelease-version
+        run: |
+          CURRENT_VERSION=$(npm pkg get version | tr -d '"')
+          PRERELEASE_TAG="${{ github.event.inputs.prerelease-tag || 'beta' }}"
+          TIMESTAMP=$(date +%s)
+          PRERELEASE_VERSION="${CURRENT_VERSION}-${PRERELEASE_TAG}.${TIMESTAMP}"
+          
+          echo "version=$PRERELEASE_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Pre-release version: $PRERELEASE_VERSION"
+
+      - name: Update package version
+        run: |
+          npm version ${{ steps.prerelease-version.outputs.version }} --no-git-tag-version
+          echo "Package version updated to ${{ steps.prerelease-version.outputs.version }}"
+
+      - name: Publish to npm with prerelease tag
+        run: |
+          npm publish --access public --tag ${{ github.event.inputs.prerelease-tag || 'beta' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update package version back
+        run: |
+          git checkout package.json package-lock.json
+          echo "Reverted package version changes"
+
+      - name: Generate prerelease notes
+        id: prerelease-notes
+        run: |
+          CHANGELOG=$(git log --oneline --no-decorate -10 2>/dev/null | head -10)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Upload prerelease artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prerelease-${{ steps.prerelease-version.outputs.version }}
+          path: |
+            dist/
+            package.json
+            SBOM.txt
+          retention-days: 14
+
+      - name: Post prerelease status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ job.status }}';
+            const version = '${{ steps.prerelease-version.outputs.version }}';
+            const tag = '${{ github.event.inputs.prerelease-tag || 'beta' }}';
+            
+            const message = status === 'success'
+              ? `✅ Pre-release published! Version: ${version} (tag: ${tag}). Install with: npm install context-iso@${tag}`
+              : `❌ Pre-release failed. Check workflow logs for details.`;
+            
+            console.log(message);
+
+      - name: Notify Slack
+        if: success() && env.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "context-iso pre-release published! 🚀",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*context-iso* pre-release published!\\n*Version:* ${{ steps.prerelease-version.outputs.version }}\\n*Tag:* ${{ github.event.inputs.prerelease-tag || 'beta' }}\\n*Branch:* develop\\n*Install:* npm install context-iso@${{ github.event.inputs.prerelease-tag || 'beta' }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        continue-on-error: true

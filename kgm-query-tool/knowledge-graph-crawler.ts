@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { MemoryManager } from '../src/memory/memory-manager.js';
+import { loadNeo4jConfig } from '../src/config/neo4j-config.js';
+
 // Knowledge Graph Schema Types
 interface RuleEntity {
   name: string;
@@ -37,14 +40,61 @@ interface PatternEntity {
   context: string;
 }
 
+function buildObservations(
+  ...parts: Array<string | string[] | null | undefined>
+): string[] {
+  const normalized: string[] = [];
+
+  for (const part of parts) {
+    if (!part) {
+      continue;
+    }
+
+    if (Array.isArray(part)) {
+      for (const value of part) {
+        if (typeof value !== 'string') {
+          continue;
+        }
+        const trimmed = value.trim();
+        if (trimmed) {
+          normalized.push(trimmed);
+        }
+      }
+      continue;
+    }
+
+    const trimmed = part.trim();
+    if (trimmed) {
+      normalized.push(trimmed);
+    }
+  }
+
+  return [...new Set(normalized)];
+}
+
+/**
+ * Neo4j-backed implementations via MemoryManager
+ */
 // MCP Integration
+let mm: MemoryManager | null = null;
+
+async function getMemoryManager(): Promise<MemoryManager> {
+  if (!mm) {
+    const config = loadNeo4jConfig();
+    mm = new MemoryManager(config);
+    await mm.initialize();
+  }
+  return mm;
+}
+
 async function createEntities(entities: any[]) {
-  // Use MCP tool to create entities
-  // This will be called via use_mcp_tool
+  const manager = await getMemoryManager();
+  return await manager.handleTool('memory.create_entities', { entities });
 }
 
 async function createRelations(relations: any[]) {
-  // Use MCP tool to create relations
+  const manager = await getMemoryManager();
+  return await manager.handleTool('memory.create_relations', { relations });
 }
 
 // Parser Functions
@@ -216,10 +266,26 @@ async function crawlKnowledgeSources() {
 
   // Create entities in MCP
   await createEntities([
-    ...allEntities.rules.map(r => ({ name: r.name, entityType: 'Rule', observations: [r.description, r.whenToApply, ...r.layerTags, ...r.topics] })),
-    ...allEntities.sections.map(s => ({ name: s.title, entityType: 'Section', observations: [s.content, ...s.layerTags, ...s.topics] })),
-    ...allEntities.directives.map(d => ({ name: d.text.substring(0, 50) + '...', entityType: 'Directive', observations: [d.text, d.severity, ...d.layerTags, ...d.topics] })),
-    ...allEntities.patterns.map(p => ({ name: 'Pattern', entityType: 'Pattern', observations: [p.snippet, ...p.topics] }))
+    ...allEntities.rules.map(r => ({
+      name: r.name,
+      entityType: 'Rule',
+      observations: buildObservations(r.description, r.whenToApply, r.content, r.layerTags, r.topics)
+    })),
+    ...allEntities.sections.map(s => ({
+      name: s.title,
+      entityType: 'Section',
+      observations: buildObservations(s.content, s.layerTags, s.topics)
+    })),
+    ...allEntities.directives.map(d => ({
+      name: `${d.text.substring(0, 50)}...`,
+      entityType: 'Directive',
+      observations: buildObservations(d.text, d.severity, d.layerTags, d.topics)
+    })),
+    ...allEntities.patterns.map(p => ({
+      name: p.context || 'Pattern',
+      entityType: 'Pattern',
+      observations: buildObservations(p.snippet, p.topics)
+    }))
   ]);
 
   // Create relations
@@ -260,7 +326,21 @@ async function crawlKnowledgeSources() {
   await createRelations(relations);
 }
 
+/**
+ * Run and ensure graceful shutdown
+ */
 // Run the crawler
-crawlKnowledgeSources().then(() => {
-  console.log('Knowledge graph crawling completed');
-}).catch(console.error);
+crawlKnowledgeSources()
+  .then(async () => {
+    console.log('Knowledge graph crawling completed');
+    if (mm) {
+      await mm.close();
+    }
+  })
+  .catch(async (error) => {
+    console.error(error);
+    if (mm) {
+      await mm.close();
+    }
+    process.exit(1);
+  });

@@ -16,7 +16,9 @@
     "test:all": "vitest --run",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "sync-knowledge": "tsx kgm-query-tool/knowledge-graph-crawler.ts",
+    "sync-knowledge:debug": "tsx --inspect-brk kgm-query-tool/knowledge-graph-crawler.ts"
   },
   "keywords": [
     "mcp",
