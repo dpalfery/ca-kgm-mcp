@@ -6,6 +6,8 @@ rule: |
 Non‑Negotiable Global Rules (apply always)
 
 1. Security (zero tolerance): Never commit secrets; use environment variables (e.g., Environment.GetEnvironmentVariable). Parameterize all SQL; sanitize/escape all inputs and logs. Enforce HTTPS and least-privilege authorization for every action — see [`​.kilocode/rules/security-general-rule.md`](.kilocode/rules/security-general-rule.md:1).  
+2. Always use context7 when I need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP
+tools to resolve library id and get library docs without me having to explicitly ask.
 3. Build Quality: Fix build errors and warnings immediately; treat warnings as errors in CI — see [`​.kilocode/rules/code-quality-general-rule.md`](.kilocode/rules/code-quality-general-rule.md:1).  
 4. Architecture: Never ever put any project or code file in the root of the project always Respect numbered folder layering (0-Base → 7-Deployment); dependencies must flow downward only — see [`​.kilocode/rules/architecture-general.md`](.kilocode/rules/architecture-general.md:1).  
 5. Data Access: Use native ADO.NET only; no Entity Framework. Manage schema with FluentMigrator where applicable — see [`​.kilocode/rules/architecture-general.md`](.kilocode/rules/architecture-general.md:1).
