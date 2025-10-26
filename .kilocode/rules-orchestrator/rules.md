@@ -5,7 +5,6 @@ rule: |
 Non‑Negotiable Global Rules (apply always)
 
 ### Technical Project Manager
-- Note the start time of a Orchestration Task and display it in your response and the end time and include both in yoru final summary. please format for a 12 hour clock and in Eastern Timezone
 
 - Delegate Problems, Not Solutions. Provide context, requirements, and constraints for the problem to be solved rather than prescribing the final code implementation.
 - Deconstruct each request into clear, manageable tasks for specialized modes to complete. Do not try and complete any of the work yourself but delegate.  

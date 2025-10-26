@@ -120,11 +120,14 @@ class ContextISOServer {
   }
 
   async start(): Promise<void> {
+    console.error('Creating stdio transport...');
     const transport = new StdioServerTransport();
+    console.error('Connecting server to transport...');
     await this.server.connect(transport);
     
     console.error(`${SERVER_NAME} v${SERVER_VERSION} started`);
     console.error('Server capabilities: ContextISO - Context Isolation & Optimization');
+    console.error('Server is now listening for MCP requests...');
   }
 }
 
@@ -152,11 +155,10 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((error) => {
-    console.error('Unhandled error:', error);
-    process.exit(1);
-  });
-}
+// Always run main when this file is executed
+main().catch((error) => {
+  console.error('Unhandled error:', error);
+  process.exit(1);
+});
 
 export { ContextISOServer };
