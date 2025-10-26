@@ -1,0 +1,105 @@
+name: Version Bump & Release Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      version-type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Get current version
+        id: current-version
+        run: |
+          VERSION=$(npm pkg get version | tr -d '"')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Bump version
+        id: bump-version
+        run: |
+          BUMP_TYPE="${{ github.event.inputs.version-type }}"
+          npm version $BUMP_TYPE --no-git-tag-version
+          NEW_VERSION=$(npm pkg get version | tr -d '"')
+          echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Bumped version: ${{ steps.current-version.outputs.version }} → $NEW_VERSION"
+
+      - name: Update CHANGELOG
+        run: |
+          echo "## v${{ steps.bump-version.outputs.new-version }} - $(date +%Y-%m-%d)" > CHANGELOG.new
+          echo "" >> CHANGELOG.new
+          echo "### Changes" >> CHANGELOG.new
+          echo "- Version bump: ${{ steps.current-version.outputs.version }} → ${{ steps.bump-version.outputs.new-version }}" >> CHANGELOG.new
+          echo "" >> CHANGELOG.new
+          if [ -f CHANGELOG.md ]; then
+            cat CHANGELOG.md >> CHANGELOG.new
+            mv CHANGELOG.new CHANGELOG.md
+          else
+            mv CHANGELOG.new CHANGELOG.md
+          fi
+
+      - name: Create release branch
+        run: |
+          BRANCH_NAME="release/${{ steps.bump-version.outputs.new-version }}"
+          git checkout -b $BRANCH_NAME
+          git add package.json package-lock.json CHANGELOG.md
+          git commit -m "chore: bump version to ${{ steps.bump-version.outputs.new-version }}"
+          git push origin $BRANCH_NAME
+
+      - name: Create Pull Request
+        uses: actions/github-script@v7
+        id: create-pr
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'chore: release v${{ steps.bump-version.outputs.new-version }}',
+              head: 'release/${{ steps.bump-version.outputs.new-version }}',
+              base: 'main',
+              body: 'Release v${{ steps.bump-version.outputs.new-version }}\n\nVersion Bump Type: ${{ github.event.inputs.version-type }}\nPrevious: v${{ steps.current-version.outputs.version }}\nNew: v${{ steps.bump-version.outputs.new-version }}\n\nChangelog and documentation have been updated. This PR is ready for merge to main and publish.'
+            });
+            console.log('Pull request created: #' + pr.number);
+            core.setOutput('pr-number', pr.number);
+            core.setOutput('pr-number', pr.number);
+
+      - name: Notify team
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: ${{ steps.create-pr.outputs.pr-number || 0 }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "Release Branch Created. Version: v${{ steps.bump-version.outputs.new-version }} (type: ${{ github.event.inputs.version-type }}). Ready to merge to main for publishing."
+            });
+        continue-on-error: true

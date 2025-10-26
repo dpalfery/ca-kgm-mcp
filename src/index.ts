@@ -9,6 +9,11 @@
  * Backend: Neo4j Aura cloud database
  */
 
+import { fileURLToPath } from 'url';
+
+// Force early output to verify script execution
+console.error('[context-iso] entrypoint loaded');
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { 
@@ -36,6 +41,7 @@ class ContextISOServer {
   private ruleManager: RuleManager;
 
   constructor() {
+    console.error('[context-iso] constructor: creating Server instance');
     this.server = new Server(
       {
         name: SERVER_NAME,
@@ -49,21 +55,41 @@ class ContextISOServer {
     );
 
     // Load Neo4j configuration from environment
+    console.error('[context-iso] constructor: loading Neo4j config');
     const config = loadNeo4jConfig();
+
+    const debugConfig = {
+      hasUri: Boolean(process.env.NEO4J_URI),
+      hasUsername: Boolean(process.env.NEO4J_USERNAME || process.env.NEO4J_USER),
+      hasPassword: Boolean(process.env.NEO4J_PASSWORD),
+      database: config.database,
+      poolSize: config.maxConnectionPoolSize,
+      nodeVersion: process.version,
+      cwd: process.cwd(),
+    } satisfies Record<string, unknown>;
+
+    if (process.env.CONTEXT_ISO_LOG_CONFIG === '1') {
+      console.error('[context-iso] debug-config', JSON.stringify(debugConfig));
+    }
     
     this.memoryManager = new MemoryManager(config);
     this.ruleManager = new RuleManager(config);
   }
 
   async initialize(): Promise<void> {
+    console.error('[context-iso] initialize: starting');
     // Initialize memory manager (context storage and retrieval)
+    console.error('[context-iso] initialize: memory manager');
     await this.memoryManager.initialize();
     
     // Initialize rule manager (new rule-specific functionality)
+    console.error('[context-iso] initialize: rule manager');
     await this.ruleManager.initialize();
 
     // Set up tool handlers
+    console.error('[context-iso] initialize: setting up tool handlers');
     this.setupToolHandlers();
+    console.error('[context-iso] initialize: complete');
   }
 
   private setupToolHandlers(): void {
@@ -133,13 +159,16 @@ class ContextISOServer {
 
 // Start the server
 async function main(): Promise<void> {
+  console.error('[context-iso] main: creating server instance');
   const server = new ContextISOServer();
   
   try {
+    console.error('[context-iso] main: initializing');
     await server.initialize();
+    console.error('[context-iso] main: starting');
     await server.start();
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('[context-iso] FATAL:', error);
     process.exit(1);
   }
 }
@@ -155,10 +184,25 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
-// Always run main when this file is executed
-main().catch((error) => {
-  console.error('Unhandled error:', error);
-  process.exit(1);
-});
+// Run if this is the entry point (handle Windows path differences)
+const isMainModule = () => {
+  try {
+    const modulePath = fileURLToPath(import.meta.url);
+    const scriptPath = process.argv[1];
+    return modulePath === scriptPath || modulePath.replace(/\\/g, '/') === scriptPath.replace(/\\/g, '/');
+  } catch {
+    return false;
+  }
+};
+
+if (isMainModule()) {
+  console.error('[context-iso] entry condition matched, calling main()');
+  main().catch((error) => {
+    console.error('[context-iso] Unhandled error:', error);
+    process.exit(1);
+  });
+} else {
+  console.error('[context-iso] module imported but not executed as main');
+}
 
 export { ContextISOServer };
