@@ -1,10 +1,12 @@
 /**
- * Directive Extractor
- * 
- * Extracts directives ([MUST], [SHOULD], [MAY]) and metadata from markdown sections.
+ * Directive Processor
+ *
+ * Extracts and generates directives ([MUST], [SHOULD], [MAY]) and metadata from markdown sections.
  */
 
-import { MarkdownSection } from './markdown-parser.js';
+import { MarkdownSection } from './markdown-parser';
+import { LocalModelManager } from '../rules/local-model-manager';
+import { z } from 'zod';
 
 export type DirectiveSeverity = 'MUST' | 'SHOULD' | 'MAY';
 
@@ -19,6 +21,7 @@ export interface ExtractedDirective {
   subsection?: string;
   context?: string;
   lineNumber: number;
+  isGenerated?: boolean;
 }
 
 export interface DirectiveExtractionResult {
@@ -33,18 +36,24 @@ export interface DirectiveExtractionResult {
 }
 
 /**
- * Directive Extractor class
+ * Directive Processor class
  */
-export class DirectiveExtractor {
+export class DirectiveProcessor {
+  private localModelManager: LocalModelManager | undefined;
+
+  constructor(localModelManager?: LocalModelManager) {
+    this.localModelManager = localModelManager;
+  }
+
   /**
    * Extract directives from parsed markdown sections
    */
-  extractFromSections(sections: MarkdownSection[], documentMetadata?: any): DirectiveExtractionResult {
+  async extractFromSections(sections: MarkdownSection[], documentMetadata?: any): Promise<DirectiveExtractionResult> {
     const directives: ExtractedDirective[] = [];
     const warnings: string[] = [];
 
     for (const section of sections) {
-      this.extractFromSection(section, documentMetadata, directives, warnings);
+      await this.extractFromSection(section, documentMetadata, directives, warnings);
     }
 
     return {
@@ -62,13 +71,13 @@ export class DirectiveExtractor {
   /**
    * Extract directives from a single section recursively
    */
-  private extractFromSection(
+  private async extractFromSection(
     section: MarkdownSection,
     documentMetadata: any,
     directives: ExtractedDirective[],
     warnings: string[],
     parentSection?: string
-  ): void {
+  ): Promise<void> {
     const sectionPath = parentSection ? `${parentSection} → ${section.title}` : section.title;
 
     // Extract directives from section content
@@ -81,9 +90,29 @@ export class DirectiveExtractor {
 
     directives.push(...sectionDirectives);
 
+    // If no explicit directives found and generation is enabled, try to generate them
+    if (sectionDirectives.length === 0 && this.localModelManager) {
+      try {
+        const generatedDirectives = await this.generateDirectives(
+          section.content,
+          sectionPath,
+          section.lineNumber,
+          documentMetadata,
+          this.localModelManager
+        );
+        directives.push(...generatedDirectives);
+        
+        if (generatedDirectives.length > 0) {
+          warnings.push(`Generated ${generatedDirectives.length} directive(s) for section: ${sectionPath}`);
+        }
+      } catch (error) {
+        warnings.push(`Failed to generate directives for section ${sectionPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
     // Recursively process subsections
     for (const subsection of section.subsections) {
-      this.extractFromSection(subsection, documentMetadata, directives, warnings, sectionPath);
+      await this.extractFromSection(subsection, documentMetadata, directives, warnings, sectionPath);
     }
   }
 
@@ -297,5 +326,95 @@ export class DirectiveExtractor {
       valid: errors.length === 0,
       errors
     };
+  }
+
+  /**
+   * Generate directives for content that lacks explicit directives
+   *
+   * @param content The content to generate directives for
+   * @param section The section name/path
+   * @param lineNumber The line number where the content starts
+   * @param documentMetadata Optional document metadata
+   * @param localModelManager The LocalModelManager instance for LLM calls
+   * @returns Promise<ExtractedDirective[]> Generated directives
+   */
+  async generateDirectives(
+    content: string,
+    section: string,
+    lineNumber: number,
+    documentMetadata?: any,
+    localModelManager?: LocalModelManager
+  ): Promise<ExtractedDirective[]> {
+    if (!localModelManager) {
+      return [];
+    }
+
+    // Schema for LLM response
+    const GeneratedDirectivesSchema = z.object({
+      directives: z.array(z.object({
+        content: z.string(),
+        severity: z.enum(['MUST', 'SHOULD', 'MAY']),
+        reasoning: z.string().optional()
+      }))
+    });
+
+    const prompt = `Analyze the following markdown section content and generate appropriate directives ([MUST], [SHOULD], [MAY]) based on the content.
+
+Section: ${section}
+Content:
+"""
+${content}
+"""
+
+Please identify key rules, guidelines, or recommendations in this content and generate directives for them. Consider:
+
+1. Security requirements or constraints (use MUST)
+2. Best practices or strong recommendations (use SHOULD)
+3. Optional suggestions or nice-to-haves (use MAY)
+
+For each directive, provide:
+- The directive content (what should be done)
+- The severity level (MUST/SHOULD/MAY)
+- Brief reasoning for why this directive is needed
+
+Focus on actionable, specific directives rather than general statements. If the content doesn't contain any rule-worthy information, return an empty array.`;
+
+    try {
+      const response = await localModelManager.generateJson(prompt, GeneratedDirectivesSchema);
+      
+      if (!response.success) {
+        console.error('Failed to generate directives:', response.error);
+        return [];
+      }
+
+      const generatedDirectives: ExtractedDirective[] = [];
+      
+      for (const directive of response.data.directives) {
+        // Extract metadata from the directive content
+        const { topics, layers, technologies } = this.extractMetadata(
+          directive.content,
+          content.substring(0, 200),
+          documentMetadata
+        );
+
+        generatedDirectives.push({
+          id: this.generateDirectiveId(directive.content, lineNumber),
+          content: directive.content,
+          severity: directive.severity,
+          topics,
+          layers,
+          technologies,
+          section,
+          context: content.substring(0, 200) + (content.length > 200 ? "..." : ""),
+          lineNumber,
+          isGenerated: true
+        });
+      }
+
+      return generatedDirectives;
+    } catch (error) {
+      console.error('Error generating directives:', error);
+      return [];
+    }
   }
 }

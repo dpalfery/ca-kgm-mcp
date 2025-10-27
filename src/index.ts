@@ -28,6 +28,7 @@ import { RuleManager } from './rules/rule-manager.js';
 import { setupMemoryTools } from './memory/memory-tools.js';
 import { setupRuleTools } from './rules/rule-tools.js';
 import { loadNeo4jConfig } from './config/neo4j-config.js';
+import { RulesEngineConfig } from './config/rules-engine-config.js';
 
 const SERVER_NAME = 'context-iso';
 const SERVER_VERSION = '1.0.0';
@@ -72,8 +73,24 @@ class ContextISOServer {
       console.error('[context-iso] debug-config', JSON.stringify(debugConfig));
     }
     
+    // Create rules engine config from environment or defaults
+    const rulesEngineConfig: RulesEngineConfig = {
+      llm: {
+        provider: (process.env.LLM_PROVIDER as any) || 'local',
+        endpoint: process.env.LLM_ENDPOINT || 'http://localhost:11434',
+        apiKey: process.env.LLM_API_KEY,
+        model: process.env.LLM_MODEL || 'deepseek-coder-v2'
+      },
+      processing: {
+        enableSplitting: process.env.ENABLE_SPLITTING === 'true',
+        minWordCountForSplit: parseInt(process.env.MIN_WORD_COUNT_SPLIT || '250'),
+        enableDirectiveGeneration: process.env.ENABLE_DIRECTIVE_GENERATION === 'true',
+        minWordCountForGeneration: parseInt(process.env.MIN_WORD_COUNT_GENERATION || '100')
+      }
+    };
+    
     this.memoryManager = new MemoryManager(config);
-    this.ruleManager = new RuleManager(config);
+    this.ruleManager = new RuleManager(config, rulesEngineConfig);
   }
 
   async initialize(): Promise<void> {

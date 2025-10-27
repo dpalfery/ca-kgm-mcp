@@ -115,17 +115,16 @@ rule: |
 
 ---
 
-## **5-Infrastructure / Shared Layer (optional)**
+## **5-Test / Shared Layer (optional)**
 
-**Purpose:** Cross-cutting or shared concerns.
+**Purpose:** unit and integration tests.
 
 **Contents:**
 
-* **Dependency Injection / Config Extensions**
-* **Logging, Email, Caching Adapters**
-* **External API Integrations**
-* **Constants / Enums / Utilities**
-* **Factories / Contracts Shared Across Layers**
+- Unit tests, integration tests, architecture tests
+- Test utilities, fixtures, mock data
+- Test configurations and helpers
+- Uses xUnit, FluentAssertions
 
 ---
 

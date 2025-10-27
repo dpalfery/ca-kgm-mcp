@@ -3,11 +3,11 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { DirectiveExtractor } from './directive-extractor.js';
+import { DirectiveProcessor } from './directive-processor.js';
 import { MarkdownParser } from './markdown-parser.js';
 
-describe('DirectiveExtractor', () => {
-  const extractor = new DirectiveExtractor();
+describe('DirectiveProcessor', () => {
+  const extractor = new DirectiveProcessor();
   const parser = new MarkdownParser();
 
   describe('extractFromSections', () => {

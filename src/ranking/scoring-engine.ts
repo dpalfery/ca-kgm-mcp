@@ -98,6 +98,28 @@ export class ScoringEngine {
     },
     weights: ScoringWeights = DEFAULT_WEIGHTS
   ): ScoredDirective {
+    // Check if directive is valid
+    if (!directive || !directive.content) {
+      return {
+        id: directive?.id || 'unknown',
+        content: directive?.content || '',
+        severity: directive?.severity || 'MAY',
+        topics: directive?.topics || [],
+        layers: directive?.layers || [],
+        technologies: directive?.technologies || [],
+        section: directive?.section || '',
+        sourcePath: directive?.sourcePath || '',
+        
+        // Scoring fields (all 0 for invalid directive)
+        severityScore: 0,
+        relevanceScore: 0,
+        layerScore: 0,
+        topicScore: 0,
+        authorityScore: 0,
+        totalScore: 0
+      };
+    }
+    
     // Calculate individual scores
     const severityScore = this.calculateSeverityScore(directive.severity);
     const relevanceScore = this.calculateRelevanceScore(

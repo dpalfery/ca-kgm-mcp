@@ -5,12 +5,12 @@
 import { describe, test, expect } from 'vitest';
 import { GraphBuilder } from './graph-builder.js';
 import { MarkdownParser } from './markdown-parser.js';
-import { DirectiveExtractor } from './directive-extractor.js';
+import { DirectiveProcessor } from './directive-processor.js';
 
 describe('GraphBuilder', () => {
   const builder = new GraphBuilder();
   const parser = new MarkdownParser();
-  const extractor = new DirectiveExtractor();
+  const extractor = new DirectiveProcessor();
 
   describe('buildGraph', () => {
     test('creates Rule node from document', () => {

@@ -4,14 +4,12 @@
       "type": "streamable-http",
       "url": "https://learn.microsoft.com/api/mcp"
     },
-     "context-iso": {
+    "context-iso": {
       "command": "npx",
       "args": [
         "--yes",
         "tsx",
-        "src/index.ts"
-        "--yes",
-        "tsx",
+        "--inspect-brk",
         "src/index.ts"
       ],
       "env": {
@@ -21,16 +19,9 @@
         "NEO4J_DATABASE": "neo4j"
       },
       "disabled": false,
-      "env": {
-        "NEO4J_URI": "${env:NEO4J_URI}",
-        "NEO4J_USERNAME": "${env:NEO4J_USERNAME}",
-        "NEO4J_PASSWORD": "${env:NEO4J_PASSWORD}",
-        "NEO4J_DATABASE": "neo4j"
-      },
-      "disabled": false,
       "alwaysAllow": [
-        "memory.rules.query_directives"
-        "memory.rules.query_directives"
+        "memory.rules.query_directives",
+        "memory.rules.upsert_markdown"
       ]
     }
   }

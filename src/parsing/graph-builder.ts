@@ -7,7 +7,7 @@
 
 import { Session } from 'neo4j-driver';
 import { ParsedMarkdown, MarkdownSection } from './markdown-parser.js';
-import { ExtractedDirective } from './directive-extractor.js';
+import { ExtractedDirective } from './directive-processor.js';
 
 export interface GraphNode {
   type: 'Rule' | 'Section' | 'Directive' | 'Topic' | 'Layer' | 'Technology';

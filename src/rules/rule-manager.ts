@@ -4,25 +4,23 @@
  * Handles rule-specific functionality for context isolation and optimization.
  * Provides context detection, rule retrieval, and ranking capabilities.
  * 
- * Phases implemented:
- * - Phase 1: Rule document ingestion (markdown parsing, directive extraction)
- * - Phase 2: Context detection (layer, technology, topic detection)
- * - Phase 3: Intelligent ranking (scoring, filtering, token budget)
- * - Phase 4: Smart context retrieval (query directives, formatting, citations)
  */
 
 import { z } from 'zod';
 import { Neo4jConnection } from '../storage/neo4j-connection.js';
-import { Neo4jConfig } from '../config/neo4j-types.js';
-import { MarkdownParser } from '../parsing/markdown-parser.js';
-import { DirectiveExtractor } from '../parsing/directive-extractor.js';
-import { GraphBuilder } from '../parsing/graph-builder.js';
-import { LayerDetector } from '../detection/layer-detector.js';
-import { TechDetector } from '../detection/tech-detector.js';
-import { TopicDetector } from '../detection/topic-detector.js';
-import { ScoringEngine, TokenCounter } from '../ranking/scoring-engine.js';
-import { ContextFormatter } from '../formatting/context-formatter.js';
-import { CitationGenerator } from '../formatting/citation-generator.js';
+import { Neo4jConfig } from '../config/neo4j-types';
+import { RulesEngineConfig } from '../config/rules-engine-config';
+import { MarkdownParser } from '../parsing/markdown-parser';
+import { DirectiveProcessor } from '../parsing/directive-processor';
+import { GraphBuilder } from '../parsing/graph-builder';
+import { RuleAnalyzer } from '../parsing/rule-analyzer';
+import { LayerDetector } from '../detection/layer-detector';
+import { TechDetector } from '../detection/tech-detector';
+import { TopicDetector } from '../detection/topic-detector';
+import { ScoringEngine, TokenCounter } from '../ranking/scoring-engine';
+import { ContextFormatter } from '../formatting/context-formatter';
+import { CitationGenerator } from '../formatting/citation-generator';
+import { LocalModelManager } from './local-model-manager';
 
 // Schema definitions for rule operations
 const QueryDirectivesSchema = z.object({
@@ -65,17 +63,31 @@ export type UpsertMarkdownInput = z.infer<typeof UpsertMarkdownSchema>;
  */
 export class RuleManager {
   private connection: Neo4jConnection | null = null;
-  private config: Neo4jConfig;
+  private neo4jConfig: Neo4jConfig;
+  private rulesEngineConfig: RulesEngineConfig;
+  private localModelManager: LocalModelManager;
+  private ruleAnalyzer: RuleAnalyzer;
+  private directiveProcessor: DirectiveProcessor;
 
-  constructor(config: Neo4jConfig) {
-    this.config = config;
+  constructor(neo4jConfig: Neo4jConfig, rulesEngineConfig: RulesEngineConfig) {
+    this.neo4jConfig = neo4jConfig;
+    this.rulesEngineConfig = rulesEngineConfig;
+    
+    // Initialize the new components
+    this.localModelManager = new LocalModelManager(rulesEngineConfig);
+    this.ruleAnalyzer = new RuleAnalyzer(this.localModelManager);
+    this.directiveProcessor = new DirectiveProcessor(this.localModelManager);
   }
 
   async initialize(): Promise<void> {
     try {
-      this.connection = new Neo4jConnection(this.config);
+      this.connection = new Neo4jConnection(this.neo4jConfig);
       await this.connection.connect();
       await this.connection.createSchema();
+      
+      // Initialize the LocalModelManager
+      this.localModelManager.initialize();
+      
       console.error('Rule manager initialized successfully');
     } catch (error) {
       throw new Error(
@@ -234,60 +246,18 @@ export class RuleManager {
   }
 
   /**
-   * Generate fallback response when no rules found or error occurs
+   * Generate error response when no rules found or error occurs
    */
   private generateFallbackResponse(
     contextResult?: any,
     error?: any
   ): Record<string, any> {
-    const fallbackBlock = `# Contextual Rules - Fallback Mode
-
-**Note:** No specific rules found in knowledge base. Using core programming principles.
-
-## 🔴 Critical Principles
-
-- **[MUST]** Write clean, readable code that future developers can understand
-- **[MUST]** Add meaningful tests for all new functionality
-- **[MUST]** Follow your project's established code style guide
-- **[MUST]** Document public APIs and complex logic
-
-## 🟡 Recommended Practices
-
-- **[SHOULD]** Consider performance implications of your design choices
-- **[SHOULD]** Use meaningful variable and function names
-- **[SHOULD]** Keep functions small and focused on a single responsibility
-- **[SHOULD]** Review your code for potential edge cases
-
-## 🟢 Best Practices
-
-- **[MAY]** Add inline documentation for particularly complex algorithms
-- **[MAY]** Consider creating helper functions to improve readability
-- **[MAY]** Think about error handling and graceful degradation
-
----
-**Status:** Fallback response (no rules loaded)
-`;
-
-    return {
-      context_block: fallbackBlock,
-      citations: [],
-      diagnostics: {
-        detectedLayer: contextResult?.detectedLayer || '*',
-        confidence: contextResult?.confidence || 0,
-        topics: contextResult?.topics || [],
-        technologies: contextResult?.technologies || [],
-        retrievalStats: {
-          searched: 0,
-          considered: 0,
-          selected: 0,
-          tokenEstimate: 500,
-          tokenBudget: 1000,
-          fallback: true,
-          error: error ? String(error) : undefined
-        }
-      },
-      timestamp: new Date().toISOString()
-    };
+    // Throw an error instead of returning fallback
+    const errorMessage = error
+      ? `Error retrieving rules: ${error instanceof Error ? error.message : String(error)}`
+      : 'No rules found in knowledge base. Please load rules using the memory.rules.upsert_markdown tool before querying.';
+    
+    throw new Error(errorMessage);
   }
 
   private async detectContext(args: any): Promise<any> {
@@ -342,7 +312,6 @@ export class RuleManager {
     }
 
     const parser = new MarkdownParser();
-    const extractor = new DirectiveExtractor();
     const graphBuilder = new GraphBuilder();
 
     const totalStats = {
@@ -365,95 +334,106 @@ export class RuleManager {
           continue;
         }
 
-        // Parse markdown
-        const parsed = parser.parse(content);
+        // Step 1: Call the RuleAnalyzer to analyze and split the document
+        const documentSplits = await this.ruleAnalyzer.analyzeAndSplit(content);
+        
+        // Process each document split
+        for (const split of documentSplits) {
+          const splitContent = split.content;
+          const splitPath = documentSplits.length > 1
+            ? `${doc.path} (split ${documentSplits.indexOf(split) + 1})`
+            : doc.path;
 
-        // Extract directives
-        const extractionResult = extractor.extractFromSections(
-          parsed.sections,
-          parsed.metadata
-        );
+          // Parse markdown
+          const parsed = parser.parse(splitContent);
 
-        // Add extraction warnings
-        warnings.push(...extractionResult.warnings);
+          // Step 2: Use the DirectiveProcessor to extract or generate directives
+          const extractionResult = await this.directiveProcessor.extractFromSections(
+            parsed.sections,
+            parsed.metadata
+          );
 
-        // Build graph structure
-        const graphResult = graphBuilder.buildGraph(
-          parsed,
-          extractionResult.directives,
-          doc.path
-        );
+          // Add extraction warnings
+          warnings.push(...extractionResult.warnings);
 
-        // Add graph warnings and errors
-        warnings.push(...graphResult.warnings);
-        errors.push(...graphResult.errors);
+          // Step 3: Call the existing GraphBuilder for each document
+          const graphResult = graphBuilder.buildGraph(
+            parsed,
+            extractionResult.directives,
+            splitPath
+          );
 
-        // Validate graph
-        const validation = graphBuilder.validateGraph(graphResult.structure);
-        if (!validation.valid) {
-          errors.push(`Validation failed for ${doc.path}: ${validation.errors.join(', ')}`);
-          continue;
-        }
+          // Add graph warnings and errors
+          warnings.push(...graphResult.warnings);
+          errors.push(...graphResult.errors);
 
-        // If validateOnly, skip persistence
-        if (params.options.validateOnly) {
-          totalStats.rules += graphResult.stats.rulesCreated;
-          totalStats.sections += graphResult.stats.sectionsCreated;
-          totalStats.directives += graphResult.stats.directivesCreated;
-          totalRelations += graphResult.stats.relationshipsCreated;
-          continue;
-        }
-
-        // Check if rule already exists (if not overwrite)
-        if (!params.options.overwrite) {
-          const session = this.connection.getSession();
-          try {
-            const existing = await session.run(
-              'MATCH (r:Rule {sourcePath: $path}) RETURN r LIMIT 1',
-              { path: doc.path }
-            );
-
-            if (existing.records.length > 0) {
-              warnings.push(`Rule from ${doc.path} already exists, skipping (use overwrite: true to replace)`);
-              await session.close();
-              continue;
-            }
-          } finally {
-            await session.close();
+          // Validate graph
+          const validation = graphBuilder.validateGraph(graphResult.structure);
+          if (!validation.valid) {
+            errors.push(`Validation failed for ${splitPath}: ${validation.errors.join(', ')}`);
+            continue;
           }
-        } else {
-          // Delete existing rule and related nodes
-          const session = this.connection.getSession();
-          try {
-            await session.run(
-              'MATCH (r:Rule {sourcePath: $path}) DETACH DELETE r',
-              { path: doc.path }
-            );
-          } finally {
-            await session.close();
-          }
-        }
 
-        // Persist to Neo4j in a transaction
-        const session = this.connection.getSession();
-        try {
-          await session.executeWrite(async (tx) => {
-            const result = await graphBuilder.persistToNeo4j(
-              tx as any, // Type cast for compatibility
-              graphResult.structure
-            );
-
+          // If validateOnly, skip persistence
+          if (params.options.validateOnly) {
             totalStats.rules += graphResult.stats.rulesCreated;
             totalStats.sections += graphResult.stats.sectionsCreated;
             totalStats.directives += graphResult.stats.directivesCreated;
-            totalRelations += result.relationshipsCreated;
-          });
-        } catch (error) {
-          errors.push(
-            `Failed to persist ${doc.path}: ${error instanceof Error ? error.message : String(error)}`
-          );
-        } finally {
-          await session.close();
+            totalRelations += graphResult.stats.relationshipsCreated;
+            continue;
+          }
+
+          // Check if rule already exists (if not overwrite)
+          if (!params.options.overwrite) {
+            const session = this.connection.getSession();
+            try {
+              const existing = await session.run(
+                'MATCH (r:Rule {sourcePath: $path}) RETURN r LIMIT 1',
+                { path: splitPath }
+              );
+
+              if (existing.records.length > 0) {
+                warnings.push(`Rule from ${splitPath} already exists, skipping (use overwrite: true to replace)`);
+                await session.close();
+                continue;
+              }
+            } finally {
+              await session.close();
+            }
+          } else {
+            // Delete existing rule and related nodes
+            const session = this.connection.getSession();
+            try {
+              await session.run(
+                'MATCH (r:Rule {sourcePath: $path}) DETACH DELETE r',
+                { path: splitPath }
+              );
+            } finally {
+              await session.close();
+            }
+          }
+
+          // Persist to Neo4j in a transaction
+          const session = this.connection.getSession();
+          try {
+            await session.executeWrite(async (tx) => {
+              const result = await graphBuilder.persistToNeo4j(
+                tx as any, // Type cast for compatibility
+                graphResult.structure
+              );
+
+              totalStats.rules += graphResult.stats.rulesCreated;
+              totalStats.sections += graphResult.stats.sectionsCreated;
+              totalStats.directives += graphResult.stats.directivesCreated;
+              totalRelations += result.relationshipsCreated;
+            });
+          } catch (error) {
+            errors.push(
+              `Failed to persist ${splitPath}: ${error instanceof Error ? error.message : String(error)}`
+            );
+          } finally {
+            await session.close();
+          }
         }
 
       } catch (error) {
