@@ -64,14 +64,12 @@ export type UpsertMarkdownInput = z.infer<typeof UpsertMarkdownSchema>;
 export class RuleManager {
   private connection: Neo4jConnection | null = null;
   private neo4jConfig: Neo4jConfig;
-  private rulesEngineConfig: RulesEngineConfig;
   private localModelManager: LocalModelManager;
   private ruleAnalyzer: RuleAnalyzer;
   private directiveProcessor: DirectiveProcessor;
 
   constructor(neo4jConfig: Neo4jConfig, rulesEngineConfig: RulesEngineConfig) {
     this.neo4jConfig = neo4jConfig;
-    this.rulesEngineConfig = rulesEngineConfig;
     
     // Initialize the new components
     this.localModelManager = new LocalModelManager(rulesEngineConfig);
@@ -249,7 +247,7 @@ export class RuleManager {
    * Generate error response when no rules found or error occurs
    */
   private generateFallbackResponse(
-    contextResult?: any,
+    _contextResult?: any,
     error?: any
   ): Record<string, any> {
     // Throw an error instead of returning fallback

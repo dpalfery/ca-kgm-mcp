@@ -2,7 +2,7 @@
 // Simulates "implement new API endpoint" task and verifies relevant rules are surfaced
 
 import { detectTaskContext } from './task-context-detector';
-import { buildRetrievalQuery, executeRetrievalQuery } from './query-builder';
+import { buildRetrievalQuery } from './query-builder';
 import { rankRetrievalResults, filterAndLimitResults } from './ranked-retrieval';
 import { formatRetrievalResponse } from './response-formatter';
 
@@ -37,7 +37,7 @@ async function runIntegrationTest() {
       content: 'Authorize every action after authentication check',
       score: 0.9,
       metadata: {
-        severity: 'must',
+        severity: 'must' as const,
         topics: ['security'],
         layer: '1-Presentation',
         source: '.kilocode/rules/security-general-rule.md#authentication-and-authorization',
@@ -51,7 +51,7 @@ async function runIntegrationTest() {
       content: 'Validate all user inputs on both client and server',
       score: 0.85,
       metadata: {
-        severity: 'must',
+        severity: 'must' as const,
         topics: ['security'],
         layer: '1-Presentation',
         source: '.kilocode/rules/security-general-rule.md#input-validation-and-sanitization',
@@ -65,7 +65,7 @@ async function runIntegrationTest() {
       content: 'All business logic must be covered by unit tests',
       score: 0.75,
       metadata: {
-        severity: 'must',
+        severity: 'must' as const,
         topics: ['testing'],
         layer: '2-Application',
         source: '.kilocode/rules/testing-general-rule.md#unit-testing',
@@ -79,7 +79,7 @@ async function runIntegrationTest() {
       content: 'Presentation layer calls into Application only',
       score: 0.7,
       metadata: {
-        severity: 'must',
+        severity: 'must' as const,
         topics: ['architecture'],
         layer: '1-Presentation',
         source: '.kilocode/rules/architecture-general.md#presentation-layer',
@@ -96,7 +96,14 @@ async function runIntegrationTest() {
   console.log();
 
   // Step 4: Rank and filter results
-  const rankedResults = rankRetrievalResults(mockResults, context);
+  const queryContext: any = {
+    topics: context.topics,
+    keywords: context.keywords
+  };
+  if (context.layer) {
+    queryContext.layer = context.layer;
+  }
+  const rankedResults = rankRetrievalResults(mockResults, queryContext);
   const filteredResults = filterAndLimitResults(rankedResults, 5);
 
   console.log('Ranked and Filtered Results:');

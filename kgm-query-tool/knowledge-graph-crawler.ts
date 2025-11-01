@@ -98,7 +98,7 @@ async function createRelations(relations: any[]) {
 }
 
 // Parser Functions
-function parseMarkdownFile(filePath: string): { rules: RuleEntity[], sections: SectionEntity[], directives: DirectiveEntity[], patterns: PatternEntity[] } {
+export function parseMarkdownFile(filePath: string): { rules: RuleEntity[], sections: SectionEntity[], directives: DirectiveEntity[], patterns: PatternEntity[] } {
   const content = fs.readFileSync(filePath, 'utf-8');
   const lines = content.split('\n');
 

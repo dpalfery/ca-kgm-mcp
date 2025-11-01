@@ -154,12 +154,32 @@ class ContextISOServer {
 
   private async handleMemoryTool(name: string, args: any): Promise<any> {
     // Delegate to memory manager for context operations
-    return await this.memoryManager.handleTool(name, args);
+    const result = await this.memoryManager.handleTool(name, args);
+    
+    // Wrap result in MCP-compliant format
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
   }
 
   private async handleRuleTool(name: string, args: any): Promise<any> {
     // Delegate to rule manager for new rule-specific functionality
-    return await this.ruleManager.handleTool(name, args);
+    const result = await this.ruleManager.handleTool(name, args);
+    
+    // Wrap result in MCP-compliant format
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
   }
 
   async start(): Promise<void> {

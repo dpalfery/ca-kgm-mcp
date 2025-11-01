@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 const LlmConfigSchema = z.object({
   provider: z.enum(['openai', 'azure_openai', 'local']).default('local'),
+  apiFormat: z.enum(['ollama', 'openai-compatible']).optional(),
   endpoint: z.string().url(),
   apiKey: z.string().optional(),
   model: z.string(),

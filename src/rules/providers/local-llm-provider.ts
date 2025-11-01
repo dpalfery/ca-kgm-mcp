@@ -7,6 +7,7 @@ interface LocalLlmConfig {
   endpoint: string;
   model: string;
   apiKey?: string;
+  apiFormat?: 'ollama' | 'openai-compatible';
 }
 
 /**
@@ -57,12 +58,21 @@ Your response should be ONLY the JSON object, without any additional text or exp
       // Try to extract JSON from the response
       let jsonText = responseText.trim();
       
-      // Remove any markdown code blocks
-      if (jsonText.startsWith('```json')) {
-        jsonText = jsonText.replace(/```json\s*/, '').replace(/```\s*$/, '');
-      } else if (jsonText.startsWith('```')) {
-        jsonText = jsonText.replace(/```\s*/, '').replace(/```\s*$/, '');
+      // Remove any markdown code blocks (more robust)
+      if (jsonText.includes('```json')) {
+        const jsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch) {
+          jsonText = jsonMatch[1];
+        }
+      } else if (jsonText.includes('```')) {
+        const codeMatch = jsonText.match(/```\s*([\s\S]*?)\s*```/);
+        if (codeMatch) {
+          jsonText = codeMatch[1];
+        }
       }
+      
+      // Clean up extra whitespace and newlines
+      jsonText = jsonText.replace(/\n\n/g, '\n').trim();
       
       // Parse and validate the JSON
       try {
@@ -115,17 +125,49 @@ Your response should be ONLY the JSON object, without any additional text or exp
     
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const requestBody = {
-          model: this.config.model,
-          prompt: prompt,
-          stream: false,
-          options: {
+        // Determine API format - explicit configuration takes precedence
+        let apiFormat = this.config.apiFormat;
+        
+        // Fallback to auto-detection if not explicitly set
+        if (!apiFormat) {
+          apiFormat = (this.config.endpoint.includes('azure') || this.config.endpoint.includes('openai'))
+            ? 'openai-compatible'
+            : 'ollama';
+        }
+        
+        let requestBody: any;
+        let endpoint: string;
+        
+        if (apiFormat === 'openai-compatible') {
+          // OpenAI-compatible format (Azure AI Foundry, OpenAI, etc.)
+          requestBody = {
+            model: this.config.model,
+            messages: [
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
             temperature: options?.temperature || 0.7,
-            num_predict: options?.maxTokens || 2048
-          }
-        };
+            max_tokens: options?.maxTokens || 2048,
+            stream: false
+          };
+          endpoint = `${this.config.endpoint}/chat/completions`;
+        } else {
+          // Ollama format
+          requestBody = {
+            model: this.config.model,
+            prompt: prompt,
+            stream: false,
+            options: {
+              temperature: options?.temperature || 0.7,
+              num_predict: options?.maxTokens || 2048
+            }
+          };
+          endpoint = `${this.config.endpoint}/api/generate`;
+        }
 
-        const response = await fetch(this.config.endpoint, {
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -142,18 +184,22 @@ Your response should be ONLY the JSON object, without any additional text or exp
         const data = await response.json() as any;
         
         // Handle different response formats from different local LLM servers
-        if (data.response) {
+        if (data.choices && data.choices[0]) {
+          // OpenAI-compatible format (Azure AI Foundry, etc.)
+          if (data.choices[0].message && data.choices[0].message.content) {
+            return data.choices[0].message.content;
+          } else if (data.choices[0].text) {
+            return data.choices[0].text;
+          }
+        } else if (data.response) {
           // Ollama format
           return data.response;
         } else if (data.content) {
           // Some other servers might use 'content'
           return data.content;
-        } else if (data.choices && data.choices[0] && data.choices[0].text) {
-          // OpenAI-compatible format
-          return data.choices[0].text;
-        } else {
-          throw new Error('Unexpected response format from LLM endpoint');
         }
+        
+        throw new Error(`Unexpected response format from LLM endpoint. Response: ${JSON.stringify(data)}`);
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
         

@@ -18,7 +18,9 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "clean": "rimraf dist",
     "sync-knowledge": "tsx kgm-query-tool/knowledge-graph-crawler.ts",
-    "sync-knowledge:debug": "tsx --inspect-brk kgm-query-tool/knowledge-graph-crawler.ts"
+    "sync-knowledge:debug": "tsx --inspect-brk kgm-query-tool/knowledge-graph-crawler.ts",
+    "sync-knowledge:ai": "tsx kgm-query-tool/ai-enhanced-knowledge-graph-crawler.ts",
+    "sync-knowledge:ai:debug": "tsx --inspect-brk kgm-query-tool/ai-enhanced-knowledge-graph-crawler.ts"
   },
   "keywords": [
     "mcp",

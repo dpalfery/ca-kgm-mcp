@@ -56,11 +56,10 @@ export function buildRetrievalQuery(taskDescription: string, context: any): Retr
 }
 
 // MCP Query Execution
-export async function executeRetrievalQuery(query: RetrievalQuery): Promise<any[]> {
-  const { semanticQuery, filters, limit } = query;
-
+export async function executeRetrievalQuery(_query: RetrievalQuery): Promise<any[]> {
   // Use MCP search_nodes tool with the constructed query
   // This would be called via use_mcp_tool
+  // Note: semanticQuery, filters, limit would be used in actual implementation
 
   // For now, return mock structure
   return [

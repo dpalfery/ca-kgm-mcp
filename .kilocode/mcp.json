@@ -9,7 +9,6 @@
       "args": [
         "--yes",
         "tsx",
-        "--inspect-brk",
         "src/index.ts"
       ],
       "env": {
@@ -21,7 +20,10 @@
       "disabled": false,
       "alwaysAllow": [
         "memory.rules.query_directives",
-        "memory.rules.upsert_markdown"
+        "memory.rules.upsert_markdown",
+        "memory.rules.detect_context",
+        "memory.read_graph",
+        "memory.search_nodes"
       ]
     }
   }
