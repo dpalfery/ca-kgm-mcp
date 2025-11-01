@@ -168,7 +168,7 @@ Used throughout for context detection:
 - **2-Application** - Controllers, services, business logic
 - **3-Domain** - Entities, models, domain objects
 - **4-Persistence** - Database, repositories, data access
-- **5-Integration** - APIs, external services, messaging
+- **5-Tests** - Test Files, test strategies and test results
 - **6-Infrastructure** - DevOps, deployment, configuration
 - **7-Deployment** - Cloud platforms, containerization
 
@@ -180,6 +180,13 @@ Used throughout for context detection:
 
 ## 🧪 Testing Standards
 
+### Test File Location Rules
+**CRITICAL:** All test files MUST be placed in the correct directory:
+- Unit tests: Place `feature.test.ts` in the same directory as `feature.ts` within `src/`
+- Integration tests: Place in `src/` (e.g., `src/integration.test.ts`)
+- Standalone test scripts: Place in `5-Tests/` directory
+- **NEVER create test files in the project root directory**
+
 ### Test Coverage Targets
 - Unit tests: >90% for all new code
 - Integration tests: ≥2 per major feature
@@ -187,9 +194,10 @@ Used throughout for context detection:
 
 ### Test File Naming
 - Feature implementation: `feature.ts`
-- Unit tests: `feature.test.ts` (same directory)
+- Unit tests: `feature.test.ts` (same directory as feature)
 - Integration tests: `src/integration.test.ts`
 - Phase-specific: `src/phase4.test.ts` (for Phase 4)
+- Standalone scripts: `5-Tests/test-*.js` or `5-Tests/*-test.js`
 
 ### Vitest Globals
 Tests use globals (no import needed):

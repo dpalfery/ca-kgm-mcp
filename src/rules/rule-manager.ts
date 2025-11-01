@@ -29,8 +29,11 @@ const QueryDirectivesSchema = z.object({
   options: z.object({
     strictLayer: z.boolean().optional(),
     maxItems: z.number().optional().default(8),
-    tokenBudget: z.number().optional().default(1000),
+    // When provided (> 0), acts as a soft token limit for the formatted context block.
+    // If omitted or 0, no token budget is applied and up to maxItems will be returned.
+    tokenBudget: z.number().optional(),
     includeBreadcrumbs: z.boolean().optional().default(true),
+    includeMetadata: z.boolean().optional().default(false),
     severityFilter: z.array(z.enum(['MUST', 'SHOULD', 'MAY'])).optional(),
   }).optional().default({})
 });
@@ -187,13 +190,22 @@ export class RuleManager {
         return b.totalScore - a.totalScore;
       });
 
-      // Limit by maxItems
+      // Limit by maxItems first
       const maxItems = params.options.maxItems || 8;
       filtered = filtered.slice(0, maxItems);
 
-      // Apply token budget if specified
-      const budget = params.options.tokenBudget || 1000;
-      const { selected, totalTokens } = TokenCounter.selectWithinBudget(filtered, budget);
+      // Apply token budget only if explicitly provided (> 0)
+      let selected = filtered;
+      let totalTokens: number;
+      const budget = params.options.tokenBudget;
+      if (typeof budget === 'number' && budget > 0) {
+        const sel = TokenCounter.selectWithinBudget(filtered, budget);
+        selected = sel.selected;
+        totalTokens = sel.totalTokens;
+      } else {
+        // Rough estimate without trimming
+        totalTokens = selected.reduce((sum, d) => sum + TokenCounter.estimateTokens(d.content) + 50, 0);
+      }
 
       // Phase 4: Format output
       const formattingInput = {
@@ -216,7 +228,25 @@ export class RuleManager {
         )
       );
 
+      const includeMetadata = params.options.includeMetadata === true;
+
       return {
+        // Slim rules for prompt focus; metadata kept out by default
+        rules: includeMetadata
+          ? selected.map(d => ({
+              id: d.id,
+              text: d.content,
+              severity: d.severity,
+              section: d.section,
+              sourcePath: d.sourcePath,
+              topics: d.topics,
+              layers: d.layers,
+              technologies: d.technologies
+            }))
+          : selected.map(d => ({
+              text: d.content,
+              severity: d.severity
+            })),
         context_block: formatted.contextBlock,
         citations: citations.map(c => c.full),
         diagnostics: {
@@ -224,12 +254,21 @@ export class RuleManager {
           confidence: contextResult.confidence,
           topics: contextResult.topics,
           technologies: contextResult.technologies,
+          // Keep metadata here for traceability/auditing without polluting prompt context
+          rulesMeta: selected.map(d => ({
+            id: d.id,
+            section: d.section,
+            sourcePath: d.sourcePath,
+            topics: d.topics,
+            layers: d.layers,
+            technologies: d.technologies
+          })),
           retrievalStats: {
             searched: allDirectives.length,
             considered: filtered.length,
             selected: selected.length,
             tokenEstimate: totalTokens,
-            tokenBudget: budget
+            tokenBudget: typeof budget === 'number' ? budget : 0
           },
           mode: params.modeSlug || 'default'
         },

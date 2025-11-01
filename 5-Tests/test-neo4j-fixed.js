@@ -1,5 +1,5 @@
-import { Neo4jConnection } from './src/storage/neo4j-connection.js';
-import { loadNeo4jConfig } from './src/config/neo4j-config.js';
+import { Neo4jConnection } from '../src/storage/neo4j-connection.js';
+import { loadNeo4jConfig } from '../src/config/neo4j-config.js';
 
 async function testNeo4jAndQuery() {
     console.log('🔍 Testing Neo4j Connection and AI-Generated Directives\n');

@@ -1,5 +1,5 @@
-import { RuleManager } from './src/rules/rule-manager.js';
-import { detectTaskContext } from './kgm-query-tool/task-context-detector.js';
+import { RuleManager } from '../src/rules/rule-manager.js';
+import { detectTaskContext } from '../kgm-query-tool/task-context-detector.js';
 
 async function testAIContextIdentification() {
     console.log('🧪 Testing AI-Based Context Identification with Rule Query\n');

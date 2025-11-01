@@ -42,9 +42,14 @@ export function setupRuleTools(): Tool[] {
               },
               tokenBudget: {
                 type: 'number',
-                description: 'Soft limit on the number of tokens in the returned context block',
-                default: 1000,
-                minimum: 100
+                description: 'Soft token budget for the formatted context block. Set to 0 or omit to disable token trimming.',
+                default: 0,
+                minimum: 0
+              },
+              includeMetadata: {
+                type: 'boolean',
+                description: 'If true, include rule metadata (ids, sources, tags) in rules[]. Default is false (only text and severity).',
+                default: false
               },
               includeBreadcrumbs: {
                 type: 'boolean',

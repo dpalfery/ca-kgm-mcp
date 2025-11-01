@@ -1,4 +1,4 @@
-import { detectTaskContext } from './kgm-query-tool/task-context-detector.js';
+import { detectTaskContext } from '../kgm-query-tool/task-context-detector.js';
 
 async function testContextDetection() {
     console.log('🧪 Testing AI-Based Context Detection (Pattern Matching)\n');

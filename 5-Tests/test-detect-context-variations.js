@@ -1,5 +1,5 @@
-import { RuleManager } from './src/rules/rule-manager.js';
-import { loadNeo4jConfig } from './src/config/neo4j-config.js';
+import { RuleManager } from '../src/rules/rule-manager.js';
+import { loadNeo4jConfig } from '../src/config/neo4j-config.js';
 
 async function testDetectContextVariations() {
   console.log('Testing detect_context with different inputs...');
