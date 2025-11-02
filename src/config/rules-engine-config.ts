@@ -17,9 +17,21 @@ const RuleProcessingConfigSchema = z.object({
   minWordCountForGeneration: z.number().int().positive().default(100),
 });
 
+const QueryDirectiveDefaultsSchema = z.object({
+  maxItems: z.number().int().positive().default(8),
+  tokenBudget: z.number().int().nonnegative().default(0),
+  includeMetadata: z.boolean().default(false),
+});
+
+const ModeConfigSchema = z.object({
+  allowedModes: z.array(z.string()).min(1).default(['architect', 'code', 'debug']),
+});
+
 export const RulesEngineConfigSchema = z.object({
   llm: LlmConfigSchema,
   processing: RuleProcessingConfigSchema,
+  queryDefaults: QueryDirectiveDefaultsSchema,
+  modes: ModeConfigSchema,
 });
 
 export type RulesEngineConfig = z.infer<typeof RulesEngineConfigSchema>;

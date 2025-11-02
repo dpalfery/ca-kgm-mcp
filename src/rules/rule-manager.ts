@@ -21,19 +21,19 @@ import { ScoringEngine, TokenCounter } from '../ranking/scoring-engine';
 import { ContextFormatter } from '../formatting/context-formatter';
 import { CitationGenerator } from '../formatting/citation-generator';
 import { LocalModelManager } from './local-model-manager';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Schema definitions for rule operations
 const QueryDirectivesSchema = z.object({
   taskDescription: z.string(),
-  modeSlug: z.enum(['architect', 'code', 'debug']).optional(),
+  modeSlug: z.string().optional(),
   options: z.object({
     strictLayer: z.boolean().optional(),
-    maxItems: z.number().optional().default(8),
-    // When provided (> 0), acts as a soft token limit for the formatted context block.
-    // If omitted or 0, no token budget is applied and up to maxItems will be returned.
+    maxItems: z.number().optional(),
     tokenBudget: z.number().optional(),
     includeBreadcrumbs: z.boolean().optional().default(true),
-    includeMetadata: z.boolean().optional().default(false),
+    includeMetadata: z.boolean().optional(),
     severityFilter: z.array(z.enum(['MUST', 'SHOULD', 'MAY'])).optional(),
   }).optional().default({})
 });
@@ -57,9 +57,19 @@ const UpsertMarkdownSchema = z.object({
   }).optional().default({})
 });
 
+const IndexRulesSchema = z.object({
+  paths: z.string(),
+  options: z.object({
+    overwrite: z.boolean().optional().default(false),
+    filePattern: z.string().optional().default('**/*.md'),
+    excludePatterns: z.array(z.string()).optional().default([])
+  }).optional().default({})
+});
+
 export type QueryDirectivesInput = z.infer<typeof QueryDirectivesSchema>;
 export type DetectContextInput = z.infer<typeof DetectContextSchema>;
 export type UpsertMarkdownInput = z.infer<typeof UpsertMarkdownSchema>;
+export type IndexRulesInput = z.infer<typeof IndexRulesSchema>;
 
 /**
  * Rule Manager class that provides new rule-specific functionality via Neo4j
@@ -67,12 +77,16 @@ export type UpsertMarkdownInput = z.infer<typeof UpsertMarkdownSchema>;
 export class RuleManager {
   private connection: Neo4jConnection | null = null;
   private neo4jConfig: Neo4jConfig;
+  private rulesEngineConfig: RulesEngineConfig;
+  private workspace: string;
   private localModelManager: LocalModelManager;
   private ruleAnalyzer: RuleAnalyzer;
   private directiveProcessor: DirectiveProcessor;
 
   constructor(neo4jConfig: Neo4jConfig, rulesEngineConfig: RulesEngineConfig) {
     this.neo4jConfig = neo4jConfig;
+    this.rulesEngineConfig = rulesEngineConfig;
+    this.workspace = neo4jConfig.workspace;
     
     // Initialize the new components
     this.localModelManager = new LocalModelManager(rulesEngineConfig);
@@ -105,6 +119,8 @@ export class RuleManager {
         return await this.detectContext(args);
       case 'memory.rules.upsert_markdown':
         return await this.upsertMarkdown(args);
+      case 'memory.rules.index_rules':
+        return await this.indexRules(args);
       default:
         throw new Error(`Unknown rule tool: ${name}`);
     }
@@ -116,6 +132,16 @@ export class RuleManager {
     if (!this.connection) {
       throw new Error('Connection not initialized');
     }
+
+    // Validate modeSlug if provided
+    if (params.modeSlug && !this.rulesEngineConfig.modes.allowedModes.includes(params.modeSlug)) {
+      throw new Error(`Invalid modeSlug '${params.modeSlug}'. Allowed modes: ${this.rulesEngineConfig.modes.allowedModes.join(', ')}`);
+    }
+
+    // Apply config defaults for options not explicitly provided
+    const maxItems = params.options.maxItems ?? this.rulesEngineConfig.queryDefaults.maxItems;
+    const tokenBudget = params.options.tokenBudget ?? this.rulesEngineConfig.queryDefaults.tokenBudget;
+    const includeMetadata = params.options.includeMetadata ?? this.rulesEngineConfig.queryDefaults.includeMetadata;
 
     try {
       // Phase 2: Detect context from task description
@@ -129,13 +155,16 @@ export class RuleManager {
       let allDirectives: Array<any> = [];
 
       try {
-        const result = await session.run(`
-          MATCH (d:Directive)
+        const result = await session.run(
+          `
+          MATCH (d:Directive {workspace: $workspace})
           RETURN d.id as id, d.content as content, d.severity as severity,
                  d.topics as topics, d.layers as layers, d.technologies as technologies,
                  d.section as section, d.sourcePath as sourcePath
           LIMIT 1000
-        `);
+          `,
+          { workspace: this.workspace }
+        );
 
         allDirectives = result.records.map(record => ({
           id: record.get('id'),
@@ -190,16 +219,14 @@ export class RuleManager {
         return b.totalScore - a.totalScore;
       });
 
-      // Limit by maxItems first
-      const maxItems = params.options.maxItems || 8;
+      // Limit by maxItems first (using config default or request override)
       filtered = filtered.slice(0, maxItems);
 
       // Apply token budget only if explicitly provided (> 0)
       let selected = filtered;
       let totalTokens: number;
-      const budget = params.options.tokenBudget;
-      if (typeof budget === 'number' && budget > 0) {
-        const sel = TokenCounter.selectWithinBudget(filtered, budget);
+      if (typeof tokenBudget === 'number' && tokenBudget > 0) {
+        const sel = TokenCounter.selectWithinBudget(filtered, tokenBudget);
         selected = sel.selected;
         totalTokens = sel.totalTokens;
       } else {
@@ -227,8 +254,6 @@ export class RuleManager {
           undefined
         )
       );
-
-      const includeMetadata = params.options.includeMetadata === true;
 
       return {
         // Slim rules for prompt focus; metadata kept out by default
@@ -268,7 +293,7 @@ export class RuleManager {
             considered: filtered.length,
             selected: selected.length,
             tokenEstimate: totalTokens,
-            tokenBudget: typeof budget === 'number' ? budget : 0
+            tokenBudget: tokenBudget
           },
           mode: params.modeSlug || 'default'
         },
@@ -397,7 +422,8 @@ export class RuleManager {
           const graphResult = graphBuilder.buildGraph(
             parsed,
             extractionResult.directives,
-            splitPath
+            splitPath,
+            this.workspace
           );
 
           // Add graph warnings and errors
@@ -425,8 +451,8 @@ export class RuleManager {
             const session = this.connection.getSession();
             try {
               const existing = await session.run(
-                'MATCH (r:Rule {sourcePath: $path}) RETURN r LIMIT 1',
-                { path: splitPath }
+                'MATCH (r:Rule {sourcePath: $path, workspace: $workspace}) RETURN r LIMIT 1',
+                { path: splitPath, workspace: this.workspace }
               );
 
               if (existing.records.length > 0) {
@@ -442,8 +468,8 @@ export class RuleManager {
             const session = this.connection.getSession();
             try {
               await session.run(
-                'MATCH (r:Rule {sourcePath: $path}) DETACH DELETE r',
-                { path: splitPath }
+                'MATCH (r:Rule {sourcePath: $path, workspace: $workspace}) DETACH DELETE r',
+                { path: splitPath, workspace: this.workspace }
               );
             } finally {
               await session.close();
@@ -487,6 +513,133 @@ export class RuleManager {
       errors,
       timestamp: new Date().toISOString()
     };
+  }
+
+  private async indexRules(args: any): Promise<any> {
+    const params = IndexRulesSchema.parse(args);
+    
+    // Parse comma-delimited paths
+    const pathList = params.paths.split(',').map(p => p.trim());
+    const markdownFiles: string[] = [];
+    const warnings: string[] = [];
+    
+    // Default exclude patterns
+    const defaultExcludes = ['**/node_modules/**', '**/.git/**', '**/build/**', '**/dist/**'];
+    const excludePatterns = [...defaultExcludes, ...params.options.excludePatterns];
+    
+    // Crawl each path
+    for (const inputPath of pathList) {
+      try {
+        // Resolve path (could be relative or absolute)
+        const resolvedPath = path.resolve(inputPath);
+        
+        if (!fs.existsSync(resolvedPath)) {
+          warnings.push(`Path does not exist: ${inputPath}`);
+          continue;
+        }
+        
+        const stat = fs.statSync(resolvedPath);
+        
+        if (stat.isFile()) {
+          // Single file
+          if (resolvedPath.endsWith('.md') && !this.isExcluded(resolvedPath, excludePatterns)) {
+            markdownFiles.push(resolvedPath);
+          }
+        } else if (stat.isDirectory()) {
+          // Recursively find markdown files
+          const files = this.findMarkdownFiles(resolvedPath, excludePatterns);
+          markdownFiles.push(...files);
+        }
+      } catch (error) {
+        warnings.push(`Error processing path ${inputPath}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    
+    if (markdownFiles.length === 0) {
+      return {
+        indexed: { rules: 0, sections: 0, directives: 0, patterns: 0 },
+        files: [],
+        warnings: [...warnings, 'No markdown files found in specified paths'],
+        errors: [],
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    // Prepare documents for upsert
+    const documents = markdownFiles.map(filePath => ({
+      path: filePath,
+      content: fs.readFileSync(filePath, 'utf-8')
+    }));
+    
+    // Call existing upsertMarkdown logic
+    const result = await this.upsertMarkdown({
+      documents,
+      options: {
+        overwrite: params.options.overwrite,
+        validateOnly: false
+      }
+    });
+    
+    // Return index-specific response
+    return {
+      indexed: result.upserted,
+      relations: result.relations,
+      files: markdownFiles,
+      filesProcessed: markdownFiles.length,
+      warnings: [...warnings, ...result.warnings],
+      errors: result.errors,
+      timestamp: result.timestamp
+    };
+  }
+  
+  /**
+   * Recursively find markdown files in a directory
+   */
+  private findMarkdownFiles(dir: string, excludePatterns: string[]): string[] {
+    const files: string[] = [];
+    
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        
+        if (this.isExcluded(fullPath, excludePatterns)) {
+          continue;
+        }
+        
+        if (entry.isDirectory()) {
+          files.push(...this.findMarkdownFiles(fullPath, excludePatterns));
+        } else if (entry.isFile() && entry.name.endsWith('.md')) {
+          files.push(fullPath);
+        }
+      }
+    } catch (error) {
+      // Silently skip directories we can't read
+    }
+    
+    return files;
+  }
+  
+  /**
+   * Check if a path matches any exclude pattern
+   */
+  private isExcluded(filePath: string, excludePatterns: string[]): boolean {
+    const normalized = filePath.replace(/\\/g, '/');
+    
+    for (const pattern of excludePatterns) {
+      // Simple glob matching for common patterns
+      const regex = pattern
+        .replace(/\*\*/g, '.*')
+        .replace(/\*/g, '[^/]*')
+        .replace(/\//g, '[\\\\/]'); // Handle both / and \
+      
+      if (new RegExp(regex).test(normalized)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   async close(): Promise<void> {

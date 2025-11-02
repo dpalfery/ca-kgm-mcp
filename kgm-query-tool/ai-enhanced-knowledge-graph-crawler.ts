@@ -114,6 +114,14 @@ class AIEnhancedKnowledgeGraphCrawler {
         minWordCountForSplit: 250,
         enableDirectiveGeneration: true, // Enable AI directive generation
         minWordCountForGeneration: 50 // Lower threshold for directive generation
+      },
+      queryDefaults: {
+        maxItems: 8,
+        tokenBudget: 0,
+        includeMetadata: false
+      },
+      modes: {
+        allowedModes: ['architect', 'code', 'debug']
       }
     };
   }
@@ -441,7 +449,7 @@ Only return the JSON array, no other text.`;
       '2-Application': ['service', 'business logic', 'workflow', 'orchestration', 'application', 'use case'],
       '3-Domain': ['entity', 'aggregate', 'domain model', 'business rule', 'domain', 'core'],
       '4-Persistence': ['database', 'repository', 'dao', 'sql', 'query', 'storage', 'persistence', 'data'],
-      '5-Integration': ['api', 'rest', 'graphql', 'external', 'integration', 'adapter', 'client', 'webhook'],
+      '5-Tests': ['test', 'testing', 'spec', 'jest', 'mocha', 'vitest', 'unit', 'integration', 'e2e'],
       '6-Tests': ['test', 'testing', 'unit test', 'integration test', 'e2e', 'spec'],
       '7-Infrastructure': ['deploy', 'infrastructure', 'ci/cd', 'monitoring', 'docker', 'kubernetes', 'cloud']
     };

@@ -151,7 +151,7 @@ describe('DirectiveProcessor', () => {
       const parsed = parser.parse(markdown);
       const result = extractor.extractFromSections(parsed.sections);
 
-      expect(result.directives[0].layers).toContain('5-Integration');
+      expect(result.directives[0].layers).toContain('5-Tests');
       expect(result.directives[1].layers).toContain('4-Persistence');
     });
 
@@ -177,7 +177,7 @@ describe('DirectiveProcessor', () => {
 topics:
   - security
   - api
-layer: 5-Integration
+layer: 5-Tests
 technologies:
   - TypeScript
 ---
@@ -191,7 +191,7 @@ technologies:
 
       expect(result.directives[0].topics).toContain('security');
       expect(result.directives[0].topics).toContain('api');
-      expect(result.directives[0].layers).toContain('5-Integration');
+      expect(result.directives[0].layers).toContain('5-Tests');
       expect(result.directives[0].technologies).toContain('typescript');
     });
   });

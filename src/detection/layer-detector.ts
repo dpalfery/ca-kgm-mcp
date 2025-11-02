@@ -52,21 +52,21 @@ const LAYER_KEYWORDS = {
     ],
     weight: 0.95
   },
-  '5-Integration': {
+  '5-Tests': {
     keywords: [
-      'api', 'client', 'service', 'adapter', 'gateway', 'proxy',
-      'http', 'rest', 'graphql', 'grpc', 'soap', 'webhook',
-      'external', 'third-party', 'integration', 'connector',
-      'fetch', 'axios', 'request', 'response'
+      'test', 'testing', 'spec', 'unit test', 'integration test', 'e2e',
+      'test case', 'test suite', 'assertion', 'mock', 'stub', 'spy',
+      'jest', 'mocha', 'vitest', 'cypress', 'playwright', 'selenium',
+      'coverage', 'tdd', 'bdd', 'scenario', 'expect', 'should'
     ],
     weight: 0.93
   },
-  '6-Infrastructure': {
+  '6-Docs': {
     keywords: [
-      'config', 'logging', 'monitoring', 'caching', 'queue',
-      'message bus', 'event', 'pubsub', 'messaging', 'storage',
-      'environment', 'secret', 'vault', 'configuration',
-      'docker', 'container', 'k8s', 'kubernetes', 'devops'
+      'documentation', 'readme', 'docs', 'guide', 'tutorial', 'specification',
+      'diagram', 'architecture doc', 'api doc', 'swagger', 'openapi',
+      'markdown', 'comment', 'inline doc', 'jsdoc', 'docstring',
+      'user guide', 'developer guide', 'onboarding', 'wiki'
     ],
     weight: 0.92
   },

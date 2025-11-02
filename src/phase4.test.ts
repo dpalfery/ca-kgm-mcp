@@ -51,7 +51,7 @@ describe('Phase 4: Smart Context Retrieval', () => {
       const text = 'Build a REST API client adapter for external services';
       const result = LayerDetector.detect(text);
       
-      expect(result.layer).toBe('5-Integration');
+      expect(result.layer).toBe('5-Tests');
       expect(result.confidence).toBeGreaterThan(0.1);
     });
 

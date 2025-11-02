@@ -48,7 +48,8 @@ export class GraphBuilder {
   buildGraph(
     parsedMarkdown: ParsedMarkdown,
     directives: ExtractedDirective[],
-    documentPath: string
+    documentPath: string,
+    workspace: string
   ): GraphBuildResult {
     const nodes: GraphNode[] = [];
     const relationships: GraphRelationship[] = [];
@@ -65,6 +66,7 @@ export class GraphBuilder {
       properties: {
         id: ruleId,
         name: ruleName,
+        workspace: workspace,
         layer: parsedMarkdown.metadata.layer || '*',
         authoritativeFor: parsedMarkdown.metadata.authoritativeFor || [],
         topics: parsedMarkdown.metadata.topics || [],
@@ -97,7 +99,7 @@ export class GraphBuilder {
 
     // Process directives
     for (const directive of directives) {
-      const directiveNode = this.createDirectiveNode(directive, ruleId, documentPath);
+      const directiveNode = this.createDirectiveNode(directive, ruleId, documentPath, workspace);
       nodes.push(directiveNode);
       stats.directivesCreated++;
 
@@ -153,6 +155,7 @@ export class GraphBuilder {
       properties: {
         id: section.id,
         ruleId: ruleId,
+        workspace: nodes.find(n => n.properties.id === ruleId)?.properties.workspace || 'default',
         name: section.title,
         content: section.content,
         level: section.level,
@@ -197,21 +200,21 @@ export class GraphBuilder {
    */
   private createDirectiveNode(
     directive: ExtractedDirective,
-    ruleId: string,
-    documentPath: string
+    _ruleId: string,
+    documentPath: string,
+    workspace: string
   ): GraphNode {
     return {
       type: 'Directive',
       properties: {
         id: directive.id,
-        text: directive.content,
+        workspace: workspace,
+        content: directive.content,
         severity: directive.severity,
         topics: directive.topics,
-        layer: directive.layers[0] || '*', // Use first layer or wildcard
-        whenToApply: [],
-        rationale: directive.context || '',
-        sourceRuleName: ruleId,
-        sourceSectionName: directive.section,
+        layers: directive.layers,
+        technologies: directive.technologies,
+        section: directive.section,
         sourcePath: documentPath,
         lineNumber: directive.lineNumber,
         createdAt: new Date().toISOString()

@@ -71,36 +71,56 @@ export class Neo4jConnection {
 
     const session = this.getSession();
     try {
-      // Create unique constraints
+      // Create composite unique constraints (workspace + identifier)
       await session.run(
-        `CREATE CONSTRAINT entity_name_unique IF NOT EXISTS
-         FOR (e:Entity) REQUIRE e.name IS UNIQUE`
+        `CREATE CONSTRAINT entity_workspace_name_unique IF NOT EXISTS
+         FOR (e:Entity) REQUIRE (e.workspace, e.name) IS UNIQUE`
       );
 
       await session.run(
-        `CREATE CONSTRAINT rule_id_unique IF NOT EXISTS
-         FOR (r:Rule) REQUIRE r.id IS UNIQUE`
+        `CREATE CONSTRAINT rule_workspace_id_unique IF NOT EXISTS
+         FOR (r:Rule) REQUIRE (r.workspace, r.id) IS UNIQUE`
       );
 
       await session.run(
-        `CREATE CONSTRAINT section_id_unique IF NOT EXISTS
-         FOR (s:Section) REQUIRE s.id IS UNIQUE`
+        `CREATE CONSTRAINT section_workspace_id_unique IF NOT EXISTS
+         FOR (s:Section) REQUIRE (s.workspace, s.id) IS UNIQUE`
       );
 
       await session.run(
-        `CREATE CONSTRAINT directive_id_unique IF NOT EXISTS
-         FOR (d:Directive) REQUIRE d.id IS UNIQUE`
+        `CREATE CONSTRAINT directive_workspace_id_unique IF NOT EXISTS
+         FOR (d:Directive) REQUIRE (d.workspace, d.id) IS UNIQUE`
       );
 
       // Create performance indexes
+      await session.run(
+        `CREATE INDEX entity_workspace_idx IF NOT EXISTS
+         FOR (e:Entity) ON (e.workspace)`
+      );
+
       await session.run(
         `CREATE INDEX entity_type_idx IF NOT EXISTS
          FOR (e:Entity) ON (e.entityType)`
       );
 
       await session.run(
+        `CREATE INDEX rule_workspace_idx IF NOT EXISTS
+         FOR (r:Rule) ON (r.workspace)`
+      );
+
+      await session.run(
         `CREATE INDEX rule_layer_idx IF NOT EXISTS
          FOR (r:Rule) ON (r.layer)`
+      );
+
+      await session.run(
+        `CREATE INDEX section_workspace_idx IF NOT EXISTS
+         FOR (s:Section) ON (s.workspace)`
+      );
+
+      await session.run(
+        `CREATE INDEX directive_workspace_idx IF NOT EXISTS
+         FOR (d:Directive) ON (d.workspace)`
       );
 
       await session.run(

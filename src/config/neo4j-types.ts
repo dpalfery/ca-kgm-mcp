@@ -9,6 +9,7 @@ export interface Neo4jConfig {
   username: string;                   // Database username (typically 'neo4j')
   password: string;                   // Database password
   database?: string;                  // Database name (default: 'neo4j')
+  workspace: string;                  // Workspace identifier for multi-tenant isolation
   encrypted: boolean;                 // Always true for Aura (should be 'ENCRYPTION_ON')
   maxConnectionPoolSize?: number;     // Maximum connection pool size (default: 50)
   connectionTimeout?: number;         // Connection timeout in milliseconds (default: 30000)

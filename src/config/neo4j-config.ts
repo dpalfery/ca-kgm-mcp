@@ -12,6 +12,8 @@ export function loadNeo4jConfig(): Neo4jConfig {
   const username = process.env.NEO4J_USERNAME || process.env.NEO4J_USER; // allow common alias
   const password = process.env.NEO4J_PASSWORD;
 
+  const workspace = process.env.WORKSPACE || process.env.NEO4J_WORKSPACE || 'default';
+
   const missing: string[] = [];
   if (!uri) missing.push('NEO4J_URI');
   if (!username) missing.push('NEO4J_USERNAME');
@@ -28,6 +30,7 @@ export function loadNeo4jConfig(): Neo4jConfig {
     username: username!,
     password: password!,
     database: process.env.NEO4J_DATABASE || 'neo4j',
+    workspace: workspace,
     encrypted: true,
     maxConnectionPoolSize: 50,
     connectionTimeout: 30000

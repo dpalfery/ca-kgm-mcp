@@ -217,7 +217,7 @@ export class DirectiveProcessor {
       '2-Application': ['service', 'business logic', 'workflow', 'orchestration', 'application'],
       '3-Domain': ['entity', 'aggregate', 'domain model', 'business rule', 'domain'],
       '4-Persistence': ['database', 'repository', 'dao', 'sql', 'query', 'storage', 'persistence'],
-      '5-Integration': ['api', 'rest', 'graphql', 'external', 'integration', 'adapter', 'client'],
+      '5-Tests': ['test', 'testing', 'spec', 'jest', 'mocha', 'vitest', 'unit', 'integration'],
       '6-Tests': ['test', 'testing', 'unit test', 'integration test', 'e2e'],
       '7-Infrastructure': ['deploy', 'infrastructure', 'ci/cd', 'monitoring', 'docker', 'kubernetes']
     };

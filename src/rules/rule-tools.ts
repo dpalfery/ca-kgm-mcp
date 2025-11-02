@@ -8,7 +8,8 @@
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 
-export function setupRuleTools(): Tool[] {
+export function setupRuleTools(allowedModes?: string[]): Tool[] {
+  const modes = allowedModes || ['architect', 'code', 'debug'];
   return [
     {
       name: 'memory.rules.query_directives',
@@ -22,8 +23,8 @@ export function setupRuleTools(): Tool[] {
           },
           modeSlug: {
             type: 'string',
-            enum: ['architect', 'code', 'debug'],
-            description: 'Optional context mode to influence rule selection (architect: high-level design, code: implementation, debug: troubleshooting)'
+            enum: modes,
+            description: `Optional context mode to influence rule selection (${modes.join(', ')})`
           },
           options: {
             type: 'object',
@@ -35,21 +36,18 @@ export function setupRuleTools(): Tool[] {
               },
               maxItems: {
                 type: 'number',
-                description: 'Maximum number of directives to return in the context block',
-                default: 8,
+                description: 'Maximum number of directives to return in the context block. If not provided, uses server-configured default.',
                 minimum: 1,
                 maximum: 20
               },
               tokenBudget: {
                 type: 'number',
-                description: 'Soft token budget for the formatted context block. Set to 0 or omit to disable token trimming.',
-                default: 0,
+                description: 'Soft token budget for the formatted context block. Set to 0 or omit to disable token trimming. If not provided, uses server-configured default.',
                 minimum: 0
               },
               includeMetadata: {
                 type: 'boolean',
-                description: 'If true, include rule metadata (ids, sources, tags) in rules[]. Default is false (only text and severity).',
-                default: false
+                description: 'If true, include rule metadata (ids, sources, tags) in rules[]. If not provided, uses server-configured default.'
               },
               includeBreadcrumbs: {
                 type: 'boolean',
@@ -149,6 +147,44 @@ export function setupRuleTools(): Tool[] {
           }
         },
         required: ['documents'],
+        additionalProperties: false
+      }
+    },
+    {
+      name: 'memory.rules.index_rules',
+      description: 'Index project rules by crawling specified paths for markdown files. Recursively scans directories and imports all discovered rule documents into the knowledge graph for the current workspace.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          paths: {
+            type: 'string',
+            description: 'Comma-delimited list of file or directory paths to crawl (e.g., "./docs/rules,./guidelines.md"). Supports absolute and relative paths. Directories are scanned recursively for .md files.'
+          },
+          options: {
+            type: 'object',
+            properties: {
+              overwrite: {
+                type: 'boolean',
+                description: 'Replace existing rules from the same source files',
+                default: false
+              },
+              filePattern: {
+                type: 'string',
+                description: 'Glob pattern for matching files (e.g., "**/*.md", "**/RULES.md")',
+                default: '**/*.md'
+              },
+              excludePatterns: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                },
+                description: 'Patterns to exclude (e.g., ["**/node_modules/**", "**/.git/**"])'
+              }
+            },
+            additionalProperties: false
+          }
+        },
+        required: ['paths'],
         additionalProperties: false
       }
     }

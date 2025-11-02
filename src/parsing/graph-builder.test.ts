@@ -156,7 +156,7 @@ Basic security rules.`;
     test('uses document metadata for Rule properties', () => {
       const markdown = `---
 title: Custom Security Rules
-layer: 5-Integration
+layer: 5-Tests
 authoritativeFor:
   - security
   - api
@@ -175,7 +175,7 @@ Content here.`;
 
       const ruleNode = result.structure.nodes.find(n => n.type === 'Rule');
       expect(ruleNode?.properties.name).toBe('Custom Security Rules');
-      expect(ruleNode?.properties.layer).toBe('5-Integration');
+      expect(ruleNode?.properties.layer).toBe('5-Tests');
       expect(ruleNode?.properties.authoritativeFor).toContain('security');
       expect(ruleNode?.properties.topics).toContain('authentication');
     });

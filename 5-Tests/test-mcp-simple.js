@@ -36,7 +36,7 @@ async function testMCPSimple() {
       content: [
         {
           type: "text",
-          text: "{\n  \"detectedLayer\": \"5-Integration\",\n  \"confidence\": 0.093,\n  \"technologies\": [\"REST\", \"Express\", \"Node.js\", \"JavaScript\"],\n  \"keywords\": [...],\n  \"timestamp\": \"...\"\n}"
+          text: "{\n  \"detectedLayer\": \"5-Tests\",\n  \"confidence\": 0.093,\n  \"technologies\": [\"REST\", \"Express\", \"Node.js\", \"JavaScript\"],\n  \"keywords\": [...],\n  \"timestamp\": \"...\"\n}"
         }
       ]
     }

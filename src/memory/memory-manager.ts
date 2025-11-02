@@ -39,9 +39,11 @@ export type SearchNode = z.infer<typeof SearchNodeSchema>;
 export class MemoryManager {
   private connection: Neo4jConnection | null = null;
   private config: Neo4jConfig;
+  private workspace: string;
 
   constructor(config: Neo4jConfig) {
     this.config = config;
+    this.workspace = config.workspace;
   }
 
   async initialize(): Promise<void> {
@@ -90,7 +92,7 @@ export class MemoryManager {
       const result = await session.run(
         `
         UNWIND $entities AS entity
-        MERGE (e:Entity {name: entity.name})
+        MERGE (e:Entity {name: entity.name, workspace: $workspace})
         ON CREATE SET
           e.entityType = entity.entityType,
           e.observations = entity.observations,
@@ -104,7 +106,7 @@ export class MemoryManager {
                e.createdAt AS createdAt,
                e.updatedAt AS updatedAt
         `,
-        { entities: validatedEntities }
+        { entities: validatedEntities, workspace: this.workspace }
       );
 
       const created = result.records.filter(
@@ -139,13 +141,13 @@ export class MemoryManager {
       const result = await session.run(
         `
         UNWIND $relations AS rel
-        MATCH (from:Entity {name: rel.from})
-        MATCH (to:Entity {name: rel.to})
+        MATCH (from:Entity {name: rel.from, workspace: $workspace})
+        MATCH (to:Entity {name: rel.to, workspace: $workspace})
         MERGE (from)-[r:RELATES_TO {type: rel.relationType}]->(to)
         ON CREATE SET r.createdAt = datetime()
         RETURN count(r) AS created
         `,
-        { relations: validatedRelations }
+        { relations: validatedRelations, workspace: this.workspace }
       );
 
       return {
@@ -166,11 +168,12 @@ export class MemoryManager {
 
     const session = this.connection.getSession();
     try {
-      // Use full-text search
+      // Use full-text search with workspace filtering
       const result = await session.run(
         `
         CALL db.index.fulltext.queryNodes('entity_search', $query)
         YIELD node, score
+        WHERE node.workspace = $workspace
         RETURN node.name AS name,
                node.entityType AS entityType,
                node.observations AS observations,
@@ -182,7 +185,8 @@ export class MemoryManager {
         `,
         {
           query: searchParams.query,
-          limit: neo4j.int(Math.floor(searchParams.limit))
+          limit: neo4j.int(Math.floor(searchParams.limit)),
+          workspace: this.workspace
         }
       );
 
@@ -208,24 +212,30 @@ export class MemoryManager {
 
     const session = this.connection.getSession();
     try {
-      const entitiesResult = await session.run(`
-        MATCH (e:Entity)
+      const entitiesResult = await session.run(
+        `
+        MATCH (e:Entity {workspace: $workspace})
         RETURN e.name AS name,
                e.entityType AS entityType,
                e.observations AS observations,
                e.createdAt AS createdAt,
                e.updatedAt AS updatedAt
         ORDER BY e.name
-      `);
+        `,
+        { workspace: this.workspace }
+      );
 
-      const relationsResult = await session.run(`
-        MATCH (from:Entity)-[r:RELATES_TO]->(to:Entity)
+      const relationsResult = await session.run(
+        `
+        MATCH (from:Entity {workspace: $workspace})-[r:RELATES_TO]->(to:Entity {workspace: $workspace})
         RETURN from.name AS fromEntity,
                to.name AS toEntity,
                r.type AS relationType,
                r.createdAt AS createdAt
         ORDER BY from.name, to.name
-      `);
+        `,
+        { workspace: this.workspace }
+      );
 
       return {
         entities: entitiesResult.records.map(r => ({

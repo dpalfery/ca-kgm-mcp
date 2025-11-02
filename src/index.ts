@@ -40,6 +40,7 @@ class ContextISOServer {
   private server: Server;
   private memoryManager: MemoryManager;
   private ruleManager: RuleManager;
+  private rulesEngineConfig: RulesEngineConfig;
 
   constructor() {
     console.error('[context-iso] constructor: creating Server instance');
@@ -86,9 +87,20 @@ class ContextISOServer {
         minWordCountForSplit: parseInt(process.env.MIN_WORD_COUNT_SPLIT || '250'),
         enableDirectiveGeneration: process.env.ENABLE_DIRECTIVE_GENERATION === 'true',
         minWordCountForGeneration: parseInt(process.env.MIN_WORD_COUNT_GENERATION || '100')
+      },
+      queryDefaults: {
+        maxItems: parseInt(process.env.QUERY_MAX_ITEMS || '8'),
+        tokenBudget: parseInt(process.env.QUERY_TOKEN_BUDGET || '0'),
+        includeMetadata: process.env.QUERY_INCLUDE_METADATA === 'true'
+      },
+      modes: {
+        allowedModes: process.env.ALLOWED_MODES
+          ? process.env.ALLOWED_MODES.split(',').map(m => m.trim())
+          : ['architect', 'code', 'debug']
       }
     };
     
+    this.rulesEngineConfig = rulesEngineConfig;
     this.memoryManager = new MemoryManager(config);
     this.ruleManager = new RuleManager(config, rulesEngineConfig);
   }
@@ -113,7 +125,7 @@ class ContextISOServer {
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       const memoryTools = setupMemoryTools();
-      const ruleTools = setupRuleTools();
+      const ruleTools = setupRuleTools(this.rulesEngineConfig.modes.allowedModes);
       
       return {
         tools: [

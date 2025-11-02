@@ -115,7 +115,7 @@ rule: |
 
 ---
 
-## **5-Test / Shared Layer (optional)**
+## **5-Test **
 
 **Purpose:** unit and integration tests.
 
