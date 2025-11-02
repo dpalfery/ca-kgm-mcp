@@ -214,12 +214,12 @@ export class DirectiveProcessor {
     // Extract architectural layers
     const layerKeywords = {
       '1-Presentation': ['ui', 'component', 'page', 'view', 'frontend', 'css', 'react', 'angular', 'vue'],
-      '2-Application': ['service', 'business logic', 'workflow', 'orchestration', 'application'],
+      '2-Application': ['service', 'business logic', 'workflow', 'orchestration', 'application', 'api', 'rest', 'endpoint', 'handler'],
       '3-Domain': ['entity', 'aggregate', 'domain model', 'business rule', 'domain'],
       '4-Persistence': ['database', 'repository', 'dao', 'sql', 'query', 'storage', 'persistence'],
-      '5-Tests': ['test', 'testing', 'spec', 'jest', 'mocha', 'vitest', 'unit', 'integration'],
-      '6-Tests': ['test', 'testing', 'unit test', 'integration test', 'e2e'],
-      '7-Infrastructure': ['deploy', 'infrastructure', 'ci/cd', 'monitoring', 'docker', 'kubernetes']
+      '5-Tests': ['test', 'testing', 'spec', 'jest', 'mocha', 'vitest', 'unit'],
+      '6-Docs': ['documentation', 'readme', 'guide', 'doc'],
+      '7-Deployment': ['deploy', 'infrastructure', 'ci/cd', 'monitoring', 'docker', 'kubernetes']
     };
 
     for (const [layer, keywords] of Object.entries(layerKeywords)) {

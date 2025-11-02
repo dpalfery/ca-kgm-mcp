@@ -85,7 +85,7 @@ async function testMCPQueryDirectives() {
 function queryMCPServer(taskDescription, modeSlug) {
     return new Promise((resolve, reject) => {
         // Create a new MCP server instance for this query
-        const child = spawn('npx', ['--yes', 'tsx', 'src/index.ts'], {
+        const child = spawn('npx', ['--yes', 'tsx', '1-Presentation/src/index.ts'], {
             stdio: ['pipe', 'pipe', 'pipe'],
             env: {
                 ...process.env,

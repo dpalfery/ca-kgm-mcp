@@ -13,13 +13,13 @@ describe('GraphBuilder', () => {
   const extractor = new DirectiveProcessor();
 
   describe('buildGraph', () => {
-    test('creates Rule node from document', () => {
+    test('creates Rule node from document', async () => {
       const markdown = `# Security Guidelines
 
 Basic security rules.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/rules/security.md');
 
       expect(result.structure.nodes).toContainEqual(
@@ -33,7 +33,7 @@ Basic security rules.`;
       expect(result.stats.rulesCreated).toBe(1);
     });
 
-    test('creates Section nodes with hierarchy', () => {
+    test('creates Section nodes with hierarchy', async () => {
       const markdown = `# Main
 
 ## Sub 1
@@ -43,7 +43,7 @@ Basic security rules.`;
 ## Sub 2`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       const sectionNodes = result.structure.nodes.filter(n => n.type === 'Section');
@@ -51,7 +51,7 @@ Basic security rules.`;
       expect(result.stats.sectionsCreated).toBeGreaterThan(0);
     });
 
-    test('creates Directive nodes from extracted directives', () => {
+    test('creates Directive nodes from extracted directives', async () => {
       const markdown = `# Guidelines
 
 [MUST] Validate all inputs.
@@ -59,7 +59,7 @@ Basic security rules.`;
 [SHOULD] Write tests.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       const directiveNodes = result.structure.nodes.filter(n => n.type === 'Directive');
@@ -67,26 +67,26 @@ Basic security rules.`;
       expect(result.stats.directivesCreated).toBe(2);
     });
 
-    test('creates CONTAINS relationships between Rule and Sections', () => {
+    test('creates CONTAINS relationships between Rule and Sections', async () => {
       const markdown = `# Main
 
 ## Section 1`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       const containsRels = result.structure.relationships.filter(r => r.type === 'CONTAINS');
       expect(containsRels.length).toBeGreaterThan(0);
     });
 
-    test('creates HAS_DIRECTIVE relationships', () => {
+    test('creates HAS_DIRECTIVE relationships', async () => {
       const markdown = `# Guidelines
 
 [MUST] Important rule.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       const hasDirectiveRels = result.structure.relationships.filter(
@@ -95,13 +95,13 @@ Basic security rules.`;
       expect(hasDirectiveRels).toHaveLength(1);
     });
 
-    test('creates Topic nodes and relationships', () => {
+    test('creates Topic nodes and relationships', async () => {
       const markdown = `# Security
 
 [MUST] Validate and sanitize all user inputs to prevent XSS attacks.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       const topicNodes = result.structure.nodes.filter(n => n.type === 'Topic');
@@ -113,13 +113,13 @@ Basic security rules.`;
       expect(topicRels.length).toBeGreaterThan(0);
     });
 
-    test('creates Layer nodes and relationships', () => {
+    test('creates Layer nodes and relationships', async () => {
       const markdown = `# API Guidelines
 
 [MUST] All REST endpoints must validate input.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       const layerNodes = result.structure.nodes.filter(n => n.type === 'Layer');
@@ -133,13 +133,13 @@ Basic security rules.`;
       }
     });
 
-    test('creates Technology nodes and relationships', () => {
+    test('creates Technology nodes and relationships', async () => {
       const markdown = `# Tech Stack
 
 [MUST] Use TypeScript for all new code.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       const techNodes = result.structure.nodes.filter(n => n.type === 'Technology');
@@ -153,7 +153,7 @@ Basic security rules.`;
       }
     });
 
-    test('uses document metadata for Rule properties', () => {
+    test('uses document metadata for Rule properties', async () => {
       const markdown = `---
 title: Custom Security Rules
 layer: 5-Tests
@@ -170,7 +170,7 @@ topics:
 Content here.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       const ruleNode = result.structure.nodes.find(n => n.type === 'Rule');
@@ -180,13 +180,13 @@ Content here.`;
       expect(ruleNode?.properties.topics).toContain('authentication');
     });
 
-    test('handles documents with no directives', () => {
+    test('handles documents with no directives', async () => {
       const markdown = `# Documentation
 
 Just plain text with no directives.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       expect(result.stats.rulesCreated).toBe(1);
@@ -196,13 +196,13 @@ Just plain text with no directives.`;
   });
 
   describe('validateGraph', () => {
-    test('validates correct graph structure', () => {
+    test('validates correct graph structure', async () => {
       const markdown = `# Test
 
 [MUST] Rule here.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const { structure } = builder.buildGraph(parsed, directives, '/test.md');
 
       const validation = builder.validateGraph(structure);
@@ -274,9 +274,9 @@ Just plain text with no directives.`;
   });
 
   describe('edge cases', () => {
-    test('handles empty markdown', () => {
+    test('handles empty markdown', async () => {
       const parsed = parser.parse('');
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/empty.md');
 
       expect(result.stats.rulesCreated).toBe(1);
@@ -284,7 +284,7 @@ Just plain text with no directives.`;
       expect(result.stats.directivesCreated).toBe(0);
     });
 
-    test('handles deeply nested sections', () => {
+    test('handles deeply nested sections', async () => {
       const markdown = `# L1
 
 ## L2
@@ -298,7 +298,7 @@ Just plain text with no directives.`;
 ###### L6`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       expect(result.stats.sectionsCreated).toBeGreaterThan(0);
@@ -306,7 +306,7 @@ Just plain text with no directives.`;
       expect(containsRels.length).toBeGreaterThan(0);
     });
 
-    test('does not create duplicate Topic/Layer/Technology nodes', () => {
+    test('does not create duplicate Topic/Layer/Technology nodes', async () => {
       const markdown = `# Guidelines
 
 [MUST] Security rule 1 for API.
@@ -314,7 +314,7 @@ Just plain text with no directives.`;
 [SHOULD] Security rule 2 for API.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       // Count unique topic nodes
@@ -326,7 +326,7 @@ Just plain text with no directives.`;
       expect(topicIds.length).toBe(uniqueTopicIds.size);
     });
 
-    test('generates unique IDs for nodes', () => {
+    test('generates unique IDs for nodes', async () => {
       const markdown = `# Test
 
 [MUST] Rule 1.
@@ -334,7 +334,7 @@ Just plain text with no directives.`;
 [SHOULD] Rule 2.`;
 
       const parsed = parser.parse(markdown);
-      const { directives } = extractor.extractFromSections(parsed.sections);
+      const { directives } = await extractor.extractFromSections(parsed.sections);
       const result = builder.buildGraph(parsed, directives, '/test.md');
 
       const allIds = result.structure.nodes.map(n => n.properties.id);

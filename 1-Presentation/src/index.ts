@@ -114,6 +114,10 @@ class ContextISOServer {
     // Initialize rule manager (new rule-specific functionality)
     console.error('[context-iso] initialize: rule manager');
     await this.ruleManager.initialize();
+    
+    // Wire up memory manager reference for AI-enhanced indexing
+    console.error('[context-iso] initialize: connecting rule manager to memory manager');
+    this.ruleManager.setMemoryManager(this.memoryManager);
 
     // Set up tool handlers
     console.error('[context-iso] initialize: setting up tool handlers');

@@ -1,5 +1,5 @@
-import { RuleManager } from '../src/rules/rule-manager.js';
-import { loadNeo4jConfig } from '../src/config/neo4j-config.js';
+import { RuleManager } from '../1-Presentation/dist/rules/rule-manager.js';
+import { loadNeo4jConfig } from '../1-Presentation/dist/config/neo4j-config.js';
 
 async function testDetectContext() {
   console.log('Testing detect_context directly...');

@@ -4,7 +4,7 @@ async function testMCPProtocol() {
   console.log('Testing MCP protocol directly...');
   
   // Start the MCP server
-  const server = spawn('npx', ['tsx', 'src/index.ts'], {
+  const server = spawn('npx', ['tsx', '1-Presentation/src/index.ts'], {
     stdio: ['pipe', 'pipe', 'pipe']
   });
   

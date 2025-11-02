@@ -12,7 +12,7 @@ console.log('🧪 Simple MCP Test...\n');
 
 // Start the MCP server process
 const tsxPath = path.join(process.cwd(), 'node_modules', '.bin', 'tsx.cmd');
-const mcpServer = spawn('cmd.exe', ['/c', tsxPath, 'src/index.ts'], {
+const mcpServer = spawn('cmd.exe', ['/c', tsxPath, '1-Presentation/src/index.ts'], {
   stdio: ['pipe', 'pipe', 'pipe'],
   env: process.env,
   cwd: process.cwd()

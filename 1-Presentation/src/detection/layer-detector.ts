@@ -30,7 +30,8 @@ const LAYER_KEYWORDS = {
       'service', 'handler', 'controller', 'use case', 'business logic',
       'workflow', 'orchestration', 'middleware', 'interceptor', 'decorator',
       'router', 'route handler', 'express', 'fastify', 'http handler',
-      'request processing', 'validation', 'authorization'
+      'request processing', 'validation', 'authorization',
+      'api', 'rest', 'endpoint', 'client', 'adapter', 'integration'
     ],
     weight: 0.95
   },

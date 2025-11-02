@@ -15,9 +15,9 @@ async function runDiagnostics() {
     // 2. Check file existence
     console.log('\n2️⃣ Critical Files:');
     const criticalFiles = [
-        'src/index.ts',
-        'src/rules/rule-manager.ts',
-        'src/storage/neo4j-connection.ts',
+        '1-Presentation/src/index.ts',
+        '1-Presentation/src/rules/rule-manager.ts',
+        '1-Presentation/src/storage/neo4j-connection.ts',
         '.kilocode/mcp.json'
     ];
     

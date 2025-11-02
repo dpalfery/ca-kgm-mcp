@@ -90,7 +90,7 @@ class MCPClient {
 
     async queryDirectives(taskDescription, modeSlug) {
         return new Promise((resolve, reject) => {
-            const child = spawn('npx', ['--yes', 'tsx', 'src/index.ts'], {
+        const child = spawn('npx', ['--yes', 'tsx', '1-Presentation/src/index.ts'], {
                 stdio: ['pipe', 'pipe', 'pipe'],
                 env: {
                     ...process.env,
