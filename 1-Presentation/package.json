@@ -2,10 +2,10 @@
   "name": "context-iso",
   "version": "1.0.0",
   "description": "ContextISO - Context Isolation & Optimization MCP server bringing clarity to LLM context through targeted knowledge graphs",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc-alias -p tsconfig.json && node scripts/fix-esm-imports.cjs",
     "build:watch": "tsc --watch",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
@@ -47,6 +47,7 @@
     "@typescript-eslint/parser": "^6.13.0",
     "eslint": "^8.54.0",
     "rimraf": "^5.0.5",
+    "tsc-alias": "^1.8.16",
     "tsx": "^4.6.0",
     "typescript": "^5.3.0",
     "vitest": "^3.2.4"
@@ -55,6 +56,6 @@
     "node": ">=18.0.0"
   },
   "bin": {
-    "context-iso": "./dist/index.js"
+    "context-iso": "./dist/src/index.js"
   }
 }

@@ -23,6 +23,7 @@ describe('Neo4j Integration Tests (Live Aura)', () => {
   let connection: Neo4jConnection;
   let memoryManager: MemoryManager;
   let ruleManager: RuleManager;
+  const TEST_WORKSPACE = 'tests';
 
   beforeAll(async () => {
     // Load configuration from environment variables
@@ -38,17 +39,24 @@ describe('Neo4j Integration Tests (Live Aura)', () => {
 
     console.log('\n🚀 Starting Neo4j Integration Tests');
     console.log(`📍 Connecting to: ${config.uri.substring(0, 50)}...`);
+    console.log(`📦 Using test workspace: "${TEST_WORKSPACE}"`);
+
+    // Override workspace to use test workspace
+    config.workspace = TEST_WORKSPACE;
 
     // Initialize connection
     connection = new Neo4jConnection(config);
     await connection.connect();
     await connection.createSchema();
 
-    // Clean up any previous test data
+    // Clean up any previous test data - ONLY from the test workspace
     const cleanSession = connection.getSession();
     try {
-      await cleanSession.run('MATCH (n) DETACH DELETE n');
-      console.log('🧹 Cleaned up previous test data');
+      await cleanSession.run(
+        'MATCH (n {workspace: $workspace}) DETACH DELETE n',
+        { workspace: TEST_WORKSPACE }
+      );
+      console.log(`🧹 Cleaned up previous test data from workspace "${TEST_WORKSPACE}"`);
     } finally {
       await cleanSession.close();
     }
@@ -77,11 +85,14 @@ describe('Neo4j Integration Tests (Live Aura)', () => {
   });
 
   afterAll(async () => {
-    // Clean up test data
+    // Clean up test data - ONLY from the test workspace
     const cleanSession = connection.getSession();
     try {
-      await cleanSession.run('MATCH (n) DETACH DELETE n');
-      console.log('🧹 Cleaned up test data after integration tests');
+      await cleanSession.run(
+        'MATCH (n {workspace: $workspace}) DETACH DELETE n',
+        { workspace: TEST_WORKSPACE }
+      );
+      console.log(`🧹 Cleaned up test data from workspace "${TEST_WORKSPACE}" after integration tests`);
     } finally {
       await cleanSession.close();
     }
@@ -90,7 +101,7 @@ describe('Neo4j Integration Tests (Live Aura)', () => {
     await memoryManager.close();
     await ruleManager.close();
     await connection.close();
-    console.log('✅ Integration tests completed\n');
+    console.log('✅ Integration tests completed (production data preserved)\n');
   });
 
   describe('Connectivity and Schema', () => {

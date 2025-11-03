@@ -71,9 +71,13 @@ Add to `.kilocode/mcp.json`:
 }
 ```
 
-## Query Directive Configuration
+## Tool Options Configuration
 
-Control default behavior for `memory.rules.query_directives` tool:
+**Important:** All tool options must be configured via environment variables. The LLM cannot override these settings - they are set once in the MCP server configuration.
+
+### Query Directive Options
+
+Control behavior for `memory.rules.query_directives` tool:
 
 ```json
 {
@@ -85,23 +89,82 @@ Control default behavior for `memory.rules.query_directives` tool:
         "NEO4J_URI": "neo4j+s://your-instance.databases.neo4j.io",
         "NEO4J_USERNAME": "neo4j",
         "NEO4J_PASSWORD": "your-password",
+        "WORKSPACE": "my-project",
         
         "QUERY_MAX_ITEMS": "8",
         "QUERY_TOKEN_BUDGET": "0",
-        "QUERY_INCLUDE_METADATA": "false"
+        "QUERY_INCLUDE_METADATA": "false",
+        "QUERY_INCLUDE_BREADCRUMBS": "true",
+        "QUERY_SEVERITY_FILTER": "MUST,SHOULD"
       }
     }
   }
 }
 ```
 
-### Configuration Options
-
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `QUERY_MAX_ITEMS` | number | `8` | Maximum directives returned per query |
 | `QUERY_TOKEN_BUDGET` | number | `0` | Soft token limit (0 = disabled) |
 | `QUERY_INCLUDE_METADATA` | boolean | `false` | Include rule metadata in response |
+| `QUERY_INCLUDE_BREADCRUMBS` | boolean | `true` | Include source file paths and sections |
+| `QUERY_SEVERITY_FILTER` | string | - | Comma-separated severity levels (MUST,SHOULD,MAY) |
+
+### Context Detection Options
+
+Control behavior for `memory.rules.detect_context` tool:
+
+```json
+{
+  "env": {
+    "DETECT_RETURN_KEYWORDS": "false",
+    "DETECT_CONFIDENCE_THRESHOLD": "0.5"
+  }
+}
+```
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `DETECT_RETURN_KEYWORDS` | boolean | `false` | Include extracted keywords in response |
+| `DETECT_CONFIDENCE_THRESHOLD` | number | `0.5` | Minimum confidence for context detection (0.0-1.0) |
+
+### Document Processing Options
+
+Control behavior for `memory.rules.upsert_markdown` tool:
+
+```json
+{
+  "env": {
+    "UPSERT_OVERWRITE": "false",
+    "UPSERT_VALIDATE_ONLY": "false"
+  }
+}
+```
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `UPSERT_OVERWRITE` | boolean | `false` | Replace existing rules from same source |
+| `UPSERT_VALIDATE_ONLY` | boolean | `false` | Parse and validate without storing |
+
+### Indexing Options
+
+Control behavior for `memory.rules.index_rules` tool:
+
+```json
+{
+  "env": {
+    "INDEX_PATHS": "./docs/rules,./guidelines.md,./CONTRIBUTING.md",
+    "INDEX_FILE_PATTERN": "**/*.md",
+    "INDEX_EXCLUDE_PATTERNS": "**/draft/**,**/archive/**"
+  }
+}
+```
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `INDEX_PATHS` | string | - | Comma-separated paths to crawl (required) |
+| `INDEX_FILE_PATTERN` | string | `**/*.md` | Glob pattern for matching files |
+| `INDEX_EXCLUDE_PATTERNS` | string | - | Comma-separated exclude patterns |
 
 ## Mode Configuration
 
@@ -182,10 +245,25 @@ All available configuration options:
         // Workspace Isolation (Required)
         "WORKSPACE": "my-project",
         
-        // Query Directive Defaults (Optional)
+        // Query Directive Options (Optional)
         "QUERY_MAX_ITEMS": "10",
         "QUERY_TOKEN_BUDGET": "2000",
         "QUERY_INCLUDE_METADATA": "true",
+        "QUERY_INCLUDE_BREADCRUMBS": "true",
+        "QUERY_SEVERITY_FILTER": "MUST,SHOULD",
+        
+        // Context Detection Options (Optional)
+        "DETECT_RETURN_KEYWORDS": "false",
+        "DETECT_CONFIDENCE_THRESHOLD": "0.5",
+        
+        // Document Processing Options (Optional)
+        "UPSERT_OVERWRITE": "false",
+        "UPSERT_VALIDATE_ONLY": "false",
+        
+        // Indexing Options (Optional)
+        "INDEX_PATHS": "./docs/rules,./guidelines.md,./CONTRIBUTING.md",
+        "INDEX_FILE_PATTERN": "**/*.md",
+        "INDEX_EXCLUDE_PATTERNS": "**/draft/**,**/archive/**",
         
         // Mode Configuration (Optional)
         "ALLOWED_MODES": "architect,code,debug,.net,react",
@@ -219,6 +297,15 @@ All available configuration options:
 | `QUERY_MAX_ITEMS` | ❌ | `8` | Max directives per query |
 | `QUERY_TOKEN_BUDGET` | ❌ | `0` | Token budget (0 = disabled) |
 | `QUERY_INCLUDE_METADATA` | ❌ | `false` | Include metadata in responses |
+| `QUERY_INCLUDE_BREADCRUMBS` | ❌ | `true` | Include source paths in responses |
+| `QUERY_SEVERITY_FILTER` | ❌ | - | Severity filter (MUST,SHOULD,MAY) |
+| `DETECT_RETURN_KEYWORDS` | ❌ | `false` | Return keywords from context detection |
+| `DETECT_CONFIDENCE_THRESHOLD` | ❌ | `0.5` | Min confidence for context detection |
+| `UPSERT_OVERWRITE` | ❌ | `false` | Overwrite existing rules on upsert |
+| `UPSERT_VALIDATE_ONLY` | ❌ | `false` | Validate without storing |
+| `INDEX_PATHS` | ❌ | - | Comma-separated paths to crawl |
+| `INDEX_FILE_PATTERN` | ❌ | `**/*.md` | File pattern for indexing |
+| `INDEX_EXCLUDE_PATTERNS` | ❌ | - | Exclude patterns for indexing |
 | `ALLOWED_MODES` | ❌ | `"architect,code,debug"` | Comma-separated allowed modes |
 | `LLM_PROVIDER` | ❌ | `"local"` | LLM provider (local, openai, azure_openai) |
 | `LLM_ENDPOINT` | ❌ | `"http://localhost:11434"` | LLM API endpoint |
@@ -233,15 +320,12 @@ All available configuration options:
 
 Use the `memory.rules.index_rules` tool to crawl and index markdown files:
 
-### Basic Usage
+### Usage
 
 ```typescript
-// Via MCP tool call
+// Via MCP tool call - no parameters, paths configured via INDEX_PATHS environment variable
 {
-  "tool": "memory.rules.index_rules",
-  "arguments": {
-    "paths": "./docs/rules,./guidelines"
-  }
+  "tool": "memory.rules.index_rules"
 }
 ```
 
@@ -249,29 +333,22 @@ Use the `memory.rules.index_rules` tool to crawl and index markdown files:
 
 Many MCP clients support slash commands:
 ```
-/index-rules ./docs/rules,./CONTRIBUTING.md
+/index-rules
 ```
 
-### Options
+**Important:** All indexing configuration (including paths) must be set via environment variables in the MCP server configuration.
 
-```typescript
+To configure indexing behavior, set these environment variables:
+
+```json
 {
-  "tool": "memory.rules.index_rules",
-  "arguments": {
-    "paths": "./docs,./rules",
-    "options": {
-      "overwrite": true,
-      "excludePatterns": ["**/draft/**", "**/archive/**"]
-    }
+  "env": {
+    "INDEX_PATHS": "./docs/rules,./guidelines.md,./CONTRIBUTING.md",
+    "INDEX_FILE_PATTERN": "**/*.md",
+    "INDEX_EXCLUDE_PATTERNS": "**/draft/**,**/archive/**"
   }
 }
 ```
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `overwrite` | boolean | `false` | Replace existing rules |
-| `filePattern` | string | `"**/*.md"` | File matching pattern |
-| `excludePatterns` | string[] | `["**/node_modules/**", "**/.git/**", ...]` | Paths to exclude |
 
 ### Response
 
@@ -294,12 +371,17 @@ Many MCP clients support slash commands:
 
 1. Build the project: `npm run build`
 2. Get Neo4j credentials from https://aura.neo4j.io
-3. Add configuration to `.kilocode/mcp.json`
+3. Add configuration to `.kilocode/mcp.json` with required environment variables:
+   - Required: `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, `WORKSPACE`
+   - Optional: `INDEX_PATHS` (required if using index_rules), `QUERY_MAX_ITEMS`, etc.
 4. Restart your MCP client
-5. Index your rules: Call `memory.rules.index_rules` with your documentation paths
+5. Index your rules: Call `memory.rules.index_rules` (paths configured via `INDEX_PATHS` environment variable)
 
 ## Notes
 
-- Settings in `mcp.json` become server defaults
-- Tool requests can override defaults per-query
+- **All tool options must be configured in `mcp.json` environment variables**
+- **LLM cannot override these settings** - they are server-side configuration only
+- Tool requests only provide the core parameters (userPrompt, text, documents)
+- Indexing paths are configured via `INDEX_PATHS` environment variable, not as tool parameters
 - Invalid `modeSlug` values are rejected with error
+- Configuration changes require MCP server restart

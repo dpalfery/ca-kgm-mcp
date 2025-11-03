@@ -8,69 +8,43 @@
 
 import { z } from 'zod';
 import { Neo4jConnection } from '../storage/neo4j-connection.js';
-import { Neo4jConfig } from '../config/neo4j-types';
-import { RulesEngineConfig } from '../config/rules-engine-config';
-import { MarkdownParser } from '../parsing/markdown-parser';
-import { DirectiveProcessor } from '../parsing/directive-processor';
-import { GraphBuilder } from '../parsing/graph-builder';
-import { RuleAnalyzer } from '../parsing/rule-analyzer';
-import { LayerDetector } from '../detection/layer-detector';
-import { TechDetector } from '../detection/tech-detector';
-import { TopicDetector } from '../detection/topic-detector';
-import { ScoringEngine, TokenCounter } from '../ranking/scoring-engine';
-import { ContextFormatter } from '../formatting/context-formatter';
-import { CitationGenerator } from '../formatting/citation-generator';
-import { LocalModelManager } from './local-model-manager';
+import { Neo4jConfig } from '../config/neo4j-types.js';
+import { RulesEngineConfig } from '../config/rules-engine-config.js';
+import { MarkdownParser } from '../parsing/markdown-parser.js';
+import { DirectiveProcessor } from '../parsing/directive-processor.js';
+import { GraphBuilder } from '../parsing/graph-builder.js';
+import { RuleAnalyzer } from '../parsing/rule-analyzer.js';
+import { LayerDetector } from '../detection/layer-detector.js';
+import { TechDetector } from '../detection/tech-detector.js';
+import { TopicDetector } from '../detection/topic-detector.js';
+import { ScoringEngine, TokenCounter } from '../ranking/scoring-engine.js';
+import { ContextFormatter } from '../formatting/context-formatter.js';
+import { CitationGenerator } from '../formatting/citation-generator.js';
+import { LocalModelManager } from './local-model-manager.js';
 import { MemoryManager } from '../memory/memory-manager.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Schema definitions for rule operations
 const QueryDirectivesSchema = z.object({
-  taskDescription: z.string(),
-  modeSlug: z.string().optional(),
-  options: z.object({
-    strictLayer: z.boolean().optional(),
-    maxItems: z.number().optional(),
-    tokenBudget: z.number().optional(),
-    includeBreadcrumbs: z.boolean().optional().default(true),
-    includeMetadata: z.boolean().optional(),
-    severityFilter: z.array(z.enum(['MUST', 'SHOULD', 'MAY'])).optional(),
-  }).optional().default({})
+  userPrompt: z.string(),
+  modeSlug: z.string().optional()
 });
 
 const DetectContextSchema = z.object({
-  text: z.string(),
-  options: z.object({
-    returnKeywords: z.boolean().optional().default(false),
-    confidenceThreshold: z.number().min(0).max(1).optional().default(0.5),
-  }).optional().default({})
+  text: z.string()
 });
 
 const UpsertMarkdownSchema = z.object({
   documents: z.array(z.object({
     path: z.string(),
     content: z.string().optional(),
-  })),
-  options: z.object({
-    overwrite: z.boolean().optional().default(false),
-    validateOnly: z.boolean().optional().default(false),
-  }).optional().default({})
-});
-
-const IndexRulesSchema = z.object({
-  paths: z.string(),
-  options: z.object({
-    overwrite: z.boolean().optional().default(false),
-    filePattern: z.string().optional().default('**/*.md'),
-    excludePatterns: z.array(z.string()).optional().default([])
-  }).optional().default({})
+  }))
 });
 
 export type QueryDirectivesInput = z.infer<typeof QueryDirectivesSchema>;
 export type DetectContextInput = z.infer<typeof DetectContextSchema>;
 export type UpsertMarkdownInput = z.infer<typeof UpsertMarkdownSchema>;
-export type IndexRulesInput = z.infer<typeof IndexRulesSchema>;
 
 /**
  * Rule Manager class that provides new rule-specific functionality via Neo4j
@@ -121,41 +95,62 @@ export class RuleManager {
   }
 
   async handleTool(name: string, args: any): Promise<any> {
+    console.error(`🔍 DEBUG handleTool: name="${name}"`);
     switch (name) {
       case 'memory.rules.query_directives':
+        console.error('🔍 DEBUG: Routing to queryDirectives');
         return await this.queryDirectives(args);
       case 'memory.rules.detect_context':
+        console.error('🔍 DEBUG: Routing to detectContext');
         return await this.detectContext(args);
       case 'memory.rules.upsert_markdown':
+        console.error('🔍 DEBUG: Routing to upsertMarkdown');
         return await this.upsertMarkdown(args);
       case 'memory.rules.index_rules':
-        return await this.indexRules(args);
+        console.error('🔍 DEBUG: Routing to indexRules');
+        return await this.indexRules();
+      case 'memory.rules.reset_index':
+        console.error('🔍 DEBUG: Routing to resetIndex');
+        return await this.resetIndex();
       default:
         throw new Error(`Unknown rule tool: ${name}`);
     }
   }
 
   private async queryDirectives(args: any): Promise<any> {
+    // Get workspace from environment variable
+    const workspaceFromEnv = process.env.WORKSPACE;
+    if (!workspaceFromEnv) {
+      throw new Error('WORKSPACE environment variable is not set');
+    }
+
     const params = QueryDirectivesSchema.parse(args);
     
     if (!this.connection) {
       throw new Error('Connection not initialized');
     }
 
+    // Override workspace from environment variable
+    const originalWorkspace = this.workspace;
+    this.workspace = workspaceFromEnv;
+
     // Validate modeSlug if provided
     if (params.modeSlug && !this.rulesEngineConfig.modes.allowedModes.includes(params.modeSlug)) {
       throw new Error(`Invalid modeSlug '${params.modeSlug}'. Allowed modes: ${this.rulesEngineConfig.modes.allowedModes.join(', ')}`);
     }
 
-    // Apply config defaults for options not explicitly provided
-    const maxItems = params.options.maxItems ?? this.rulesEngineConfig.queryDefaults.maxItems;
-    const tokenBudget = params.options.tokenBudget ?? this.rulesEngineConfig.queryDefaults.tokenBudget;
-    const includeMetadata = params.options.includeMetadata ?? this.rulesEngineConfig.queryDefaults.includeMetadata;
+    // Inject options from environment variables
+    const maxItems = parseInt(process.env.QUERY_MAX_ITEMS || '') || this.rulesEngineConfig.queryDefaults.maxItems;
+    const tokenBudget = parseInt(process.env.QUERY_TOKEN_BUDGET || '') || this.rulesEngineConfig.queryDefaults.tokenBudget;
+    const includeMetadata = process.env.QUERY_INCLUDE_METADATA === 'true' || this.rulesEngineConfig.queryDefaults.includeMetadata;
+    const includeBreadcrumbs = process.env.QUERY_INCLUDE_BREADCRUMBS !== 'false';
+    const severityFilterStr = process.env.QUERY_SEVERITY_FILTER;
+    const severityFilter = severityFilterStr ? severityFilterStr.split(',').map(s => s.trim() as 'MUST' | 'SHOULD' | 'MAY') : undefined;
 
     try {
-      // Phase 2: Detect context from task description
+      // Phase 2: Detect context from user prompt
       const contextResult = await this.detectContext({
-        text: params.taskDescription,
+        text: params.userPrompt,
         options: { returnKeywords: true }
       });
 
@@ -189,7 +184,54 @@ export class RuleManager {
         await session.close();
       }
 
-      // If no rules found, return fallback response
+      // If no rules found, try fallback from Entity graph (entityType='Directive')
+      if (allDirectives.length === 0) {
+        const session2 = this.connection.getSession();
+        try {
+          const result2 = await session2.run(
+            `
+            MATCH (e:Entity {workspace: $workspace})
+            WHERE toLower(e.entityType) = 'directive'
+            RETURN e.name AS name, e.observations AS observations
+            LIMIT 2000
+            `,
+            { workspace: this.workspace }
+          );
+
+          const mapped = result2.records.map(r => {
+            const name = r.get('name') as string;
+            const obs = (r.get('observations') || []) as string[];
+            const joined = Array.isArray(obs) ? obs.join(' ') : String(obs || '');
+            let severity: 'MUST'|'SHOULD'|'MAY' = 'SHOULD';
+            if (/\bMUST\b/i.test(joined)) severity = 'MUST';
+            else if (/\bMAY\b/i.test(joined)) severity = 'MAY';
+            // Choose a content candidate: first long-ish observation that isn't a tag
+            let content = name;
+            if (Array.isArray(obs) && obs.length > 0) {
+              const cand = obs.find(s => typeof s === 'string' && s.length > 20 && !/AI-Generated|Confidence:|Layer|Topic|Technolog/i.test(s));
+              if (cand) content = cand;
+            }
+            return {
+              id: name,
+              content,
+              severity,
+              topics: [],
+              layers: [],
+              technologies: [],
+              section: undefined,
+              sourcePath: undefined
+            };
+          });
+
+          if (mapped.length > 0) {
+            allDirectives = mapped;
+          }
+        } finally {
+          await session2.close();
+        }
+      }
+
+      // If still no rules found, return fallback response
       if (allDirectives.length === 0) {
         return this.generateFallbackResponse(contextResult);
       }
@@ -206,9 +248,9 @@ export class RuleManager {
 
       // Apply severity filter if provided
       let filtered = scoredDirectives;
-      if (params.options.severityFilter && params.options.severityFilter.length > 0) {
+      if (severityFilter && severityFilter.length > 0) {
         filtered = scoredDirectives.filter(d =>
-          params.options.severityFilter!.includes(d.severity)
+          severityFilter.includes(d.severity)
         );
       }
 
@@ -249,7 +291,7 @@ export class RuleManager {
         detectedLayer: contextResult.detectedLayer,
         detectedTopics: contextResult.topics,
         detectedTechnologies: contextResult.technologies,
-        includeBreadcrumbs: params.options.includeBreadcrumbs !== false
+        includeBreadcrumbs: includeBreadcrumbs
       };
 
       const formatted = ContextFormatter.format(formattingInput);
@@ -309,10 +351,17 @@ export class RuleManager {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Error in queryDirectives:', error);
+      const msg = error instanceof Error ? error.message : JSON.stringify(error);
+      const stack = error instanceof Error ? (error.stack || '') : undefined;
+      try {
+        console.error('Error in queryDirectives:', { msg, stack, args });
+      } catch {}
       
       // Return fallback on error
       return this.generateFallbackResponse(undefined, error);
+    } finally {
+      // Restore original workspace
+      this.workspace = originalWorkspace;
     }
   }
 
@@ -334,6 +383,10 @@ export class RuleManager {
   private async detectContext(args: any): Promise<any> {
     const params = DetectContextSchema.parse(args);
     
+    // Inject options from environment variables
+    const returnKeywords = process.env.DETECT_RETURN_KEYWORDS === 'true';
+    const confidenceThreshold = parseFloat(process.env.DETECT_CONFIDENCE_THRESHOLD || '0.5');
+    
     // Phase 2: Context Detection
     const layerResult = LayerDetector.detect(params.text);
     const technologies = TechDetector.extract(params.text);
@@ -341,18 +394,18 @@ export class RuleManager {
 
     // Extract keywords if requested
     let keywords: string[] | undefined = undefined;
-    if (params.options.returnKeywords) {
+    if (returnKeywords) {
       const words = params.text.toLowerCase().split(/\W+/);
       keywords = Array.from(new Set(words)).filter(w => w.length > 3).slice(0, 10);
     }
 
     // Filter by confidence threshold
     const filteredTopics = topics
-      .filter(t => t.confidence >= params.options.confidenceThreshold)
+      .filter(t => t.confidence >= confidenceThreshold)
       .map(t => t.name);
 
     const filteredTechs = technologies
-      .filter(t => t.confidence >= params.options.confidenceThreshold)
+      .filter(t => t.confidence >= confidenceThreshold)
       .map(t => t.name);
 
     // Build alternatives
@@ -381,6 +434,10 @@ export class RuleManager {
     if (!this.connection) {
       throw new Error('Connection not initialized');
     }
+
+    // Inject options from environment variables
+    const overwrite = process.env.UPSERT_OVERWRITE === 'true';
+    const validateOnly = process.env.UPSERT_VALIDATE_ONLY === 'true';
 
     const parser = new MarkdownParser();
     const graphBuilder = new GraphBuilder();
@@ -418,7 +475,7 @@ export class RuleManager {
           // Parse markdown
           const parsed = parser.parse(splitContent);
 
-          // Step 2: Use the DirectiveProcessor to extract or generate directives
+        // Step 2: Use the DirectiveProcessor to extract or generate directives
           const extractionResult = await this.directiveProcessor.extractFromSections(
             parsed.sections,
             parsed.metadata
@@ -447,7 +504,7 @@ export class RuleManager {
           }
 
           // If validateOnly, skip persistence
-          if (params.options.validateOnly) {
+          if (validateOnly) {
             totalStats.rules += graphResult.stats.rulesCreated;
             totalStats.sections += graphResult.stats.sectionsCreated;
             totalStats.directives += graphResult.stats.directivesCreated;
@@ -456,7 +513,7 @@ export class RuleManager {
           }
 
           // Check if rule already exists (if not overwrite)
-          if (!params.options.overwrite) {
+          if (!overwrite) {
             const session = this.connection.getSession();
             try {
               const existing = await session.run(
@@ -469,17 +526,6 @@ export class RuleManager {
                 await session.close();
                 continue;
               }
-            } finally {
-              await session.close();
-            }
-          } else {
-            // Delete existing rule and related nodes
-            const session = this.connection.getSession();
-            try {
-              await session.run(
-                'MATCH (r:Rule {sourcePath: $path, workspace: $workspace}) DETACH DELETE r',
-                { path: splitPath, workspace: this.workspace }
-              );
             } finally {
               await session.close();
             }
@@ -524,50 +570,79 @@ export class RuleManager {
     };
   }
 
-  private async indexRules(args: any): Promise<any> {
-    const params = IndexRulesSchema.parse(args);
-    
+  private async indexRules(): Promise<any> {
     if (!this.memoryManager) {
       throw new Error('Memory manager not set. Call setMemoryManager() before using index_rules.');
     }
     
+    // Get paths from environment variable
+    console.error('🔍 DEBUG: Checking environment variables...');
+    console.error('🔍 DEBUG: process.env keys:', Object.keys(process.env).filter(k => k.includes('INDEX') || k.includes('WORKSPACE') || k.includes('QUERY')));
+    console.error('🔍 DEBUG: INDEX_PATHS =', process.env.INDEX_PATHS);
+    console.error('🔍 DEBUG: WORKSPACE =', process.env.WORKSPACE);
+    console.error('🔍 DEBUG: QUERY_MAX_ITEMS =', process.env.QUERY_MAX_ITEMS);
+    
+    const pathsFromEnv = process.env.INDEX_PATHS;
+    if (!pathsFromEnv) {
+      throw new Error('INDEX_PATHS environment variable is not set');
+    }
+    
+    // Inject options from environment variables
+    const filePattern = process.env.INDEX_FILE_PATTERN || '**/*.md';
+    const excludePatternsStr = process.env.INDEX_EXCLUDE_PATTERNS;
+    const customExcludePatterns = excludePatternsStr ? excludePatternsStr.split(',').map(p => p.trim()) : [];
+    console.error(`[index_rules] Using filePattern: ${filePattern}`);
+    console.error(`[index_rules] Using excludePatterns: ${JSON.stringify(customExcludePatterns)}`);
+    
     // Parse comma-delimited paths
-    const pathList = params.paths.split(',').map(p => p.trim());
+    const pathList = pathsFromEnv.split(',').map(p => p.trim());
     const markdownFiles: string[] = [];
     const warnings: string[] = [];
     const errors: string[] = [];
     
     // Default exclude patterns
     const defaultExcludes = ['**/node_modules/**', '**/.git/**', '**/build/**', '**/dist/**'];
-    const excludePatterns = [...defaultExcludes, ...params.options.excludePatterns];
+    const excludePatterns = [...defaultExcludes, ...customExcludePatterns];
+    
+    // Prepare knowledge graph builders
+    const parser = new MarkdownParser();
+    const graphBuilder = new GraphBuilder();
     
     // Crawl each path
     for (const inputPath of pathList) {
       try {
         // Resolve path (could be relative or absolute)
         const resolvedPath = path.resolve(inputPath);
+        console.error(`[index_rules] Scanning inputPath=${inputPath} -> resolved=${resolvedPath}`);
         
         if (!fs.existsSync(resolvedPath)) {
           warnings.push(`Path does not exist: ${inputPath}`);
+          console.error(`[index_rules] Path not found: ${resolvedPath}`);
           continue;
         }
         
         const stat = fs.statSync(resolvedPath);
         
         if (stat.isFile()) {
-          // Single file
-          if (resolvedPath.endsWith('.md') && !this.isExcluded(resolvedPath, excludePatterns)) {
+          // Single file - use filePattern for matching
+          const match = this.matchesPattern(resolvedPath, filePattern);
+          const excluded = this.isExcluded(resolvedPath, excludePatterns);
+          console.error(`[index_rules] File check: match=${match} excluded=${excluded} file=${resolvedPath}`);
+          if (match && !excluded) {
             markdownFiles.push(resolvedPath);
           }
         } else if (stat.isDirectory()) {
           // Recursively find markdown files
-          const files = this.findMarkdownFiles(resolvedPath, excludePatterns);
+          const files = this.findMarkdownFilesWithPattern(resolvedPath, filePattern, excludePatterns);
+          console.error(`[index_rules] Dir matched files: ${files.length} under ${resolvedPath}`);
           markdownFiles.push(...files);
         }
       } catch (error) {
         warnings.push(`Error processing path ${inputPath}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
+    
+    console.error(`[index_rules] Total markdown files discovered: ${markdownFiles.length}`);
     
     if (markdownFiles.length === 0) {
       return {
@@ -581,170 +656,141 @@ export class RuleManager {
     
     console.error(`📁 Processing ${markdownFiles.length} markdown files...`);
     
-    // AI-ENHANCED PARSING: Use same logic as AI-enhanced crawler
-    const allEntities = {
-      rules: [] as any[],
-      sections: [] as any[],
-      directives: [] as any[],
-      patterns: [] as any[]
-    };
-    
+    // AI-ENHANCED PARSING: process file-by-file with incremental persistence
     let totalFilesProcessed = 0;
     let totalAIDirectives = 0;
-    
+    let totalEntitiesCreated = 0;
+    let totalRelationsCreated = 0;
+
     for (const filePath of markdownFiles) {
       try {
         console.error(`🔍 Processing file: ${filePath}`);
         const content = fs.readFileSync(filePath, 'utf-8');
         
-        // Parse markdown with AI directive extraction
+        // Build knowledge graph (Rule/Section/Directive) and persist per file
+        try {
+          const parsedDoc = parser.parse(content);
+          const extraction = await this.directiveProcessor.extractFromSections(parsedDoc.sections, parsedDoc.metadata);
+          const graphResult = graphBuilder.buildGraph(parsedDoc, extraction.directives, filePath, this.workspace);
+          const validation = graphBuilder.validateGraph(graphResult.structure);
+          if (!validation.valid) {
+            errors.push(`Validation failed for ${filePath}: ${validation.errors.join(', ')}`);
+          } else {
+            const session = this.connection!.getSession();
+            try {
+              await session.executeWrite(async (tx) => {
+                await graphBuilder.persistToNeo4j(tx as any, graphResult.structure);
+              });
+            } finally {
+              await session.close();
+            }
+          }
+        } catch (e) {
+          errors.push(`Graph persistence failed for ${filePath}: ${e instanceof Error ? e.message : String(e)}`);
+        }
+        
+        // Parse markdown with AI directive extraction (Entity graph analytics)
         const parsed = await this.parseMarkdownWithAI(content, filePath);
-        
-        allEntities.rules.push(...parsed.rules);
-        allEntities.sections.push(...parsed.sections);
-        allEntities.directives.push(...parsed.directives);
-        allEntities.patterns.push(...parsed.patterns);
-        
-        totalFilesProcessed++;
         totalAIDirectives += parsed.directives.length;
+
+        // Incrementally store Entities for this file
+        const entitiesBatch = [
+          ...parsed.rules.map(r => ({
+            name: r.name,
+            entityType: 'Rule',
+            observations: this.buildObservations(r.description, r.whenToApply, r.content, r.layerTags, r.topics)
+          })),
+          ...parsed.sections.map(s => ({
+            name: s.title,
+            entityType: 'Section',
+            observations: this.buildObservations(s.content, s.layerTags, s.topics)
+          })),
+          ...parsed.directives.map(d => ({
+            name: `${d.text.substring(0, 50)}...`,
+            entityType: 'Directive',
+            observations: this.buildObservations(
+              d.text,
+              d.severity,
+              d.layerTags,
+              d.topics,
+              d.technologies,
+              d.isGenerated ? 'AI-Generated' : 'Manual',
+              d.confidence ? `Confidence: ${d.confidence}` : '',
+              d.reasoning || ''
+            )
+          })),
+          ...parsed.patterns.map(p => ({
+            name: p.context || 'Pattern',
+            entityType: 'Pattern',
+            observations: this.buildObservations(p.snippet, p.topics)
+          }))
+        ];
+        if (entitiesBatch.length > 0) {
+          const res = await this.memoryManager.handleTool('memory.create_entities', { entities: entitiesBatch });
+          totalEntitiesCreated += (res.created || 0) + (res.updated || 0);
+        }
+
+        // Build Entity relations per file (CONTAINS only; skip taxonomy which is not an Entity)
+        const relationsBatch: any[] = [];
+        for (const rule of parsed.rules) {
+          for (const section of parsed.sections) {
+            if (section.filePath === rule.filePath) {
+              relationsBatch.push({ from: rule.name, to: section.title, relationType: 'CONTAINS' });
+            }
+          }
+          for (const directive of parsed.directives) {
+            if (directive.filePath === rule.filePath && directive.sectionTitle === rule.name) {
+              relationsBatch.push({ from: rule.name, to: directive.text.substring(0, 50) + '...', relationType: 'CONTAINS_AI_DIRECTIVE' });
+            }
+          }
+        }
+        for (const section of parsed.sections) {
+          for (const directive of parsed.directives) {
+            if (directive.filePath === section.filePath && directive.sectionTitle === section.title) {
+              relationsBatch.push({ from: section.title, to: directive.text.substring(0, 50) + '...', relationType: 'CONTAINS_AI_DIRECTIVE' });
+            }
+          }
+        }
+        if (relationsBatch.length > 0) {
+          const relRes = await this.memoryManager.handleTool('memory.create_relations', { relations: relationsBatch });
+          totalRelationsCreated += (relRes.created || 0);
+        }
+
+        totalFilesProcessed++;
       } catch (error) {
         errors.push(`Failed to process ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
-    
+
     console.error(`\n📊 AI-Enhanced Crawling Summary:`);
     console.error(`   Files processed: ${totalFilesProcessed}`);
-    console.error(`   Rules found: ${allEntities.rules.length}`);
-    console.error(`   Sections found: ${allEntities.sections.length}`);
     console.error(`   AI Directives generated: ${totalAIDirectives}`);
-    console.error(`   Patterns found: ${allEntities.patterns.length}`);
-    
-    // Create entities in Neo4j using Memory Manager
-    console.error(`\n💾 Storing entities in Neo4j...`);
-    const entityResult = await this.memoryManager.handleTool('memory.create_entities', {
-      entities: [
-        ...allEntities.rules.map(r => ({
-          name: r.name,
-          entityType: 'Rule',
-          observations: this.buildObservations(r.description, r.whenToApply, r.content, r.layerTags, r.topics)
-        })),
-        ...allEntities.sections.map(s => ({
-          name: s.title,
-          entityType: 'Section',
-          observations: this.buildObservations(s.content, s.layerTags, s.topics)
-        })),
-        ...allEntities.directives.map(d => ({
-          name: `${d.text.substring(0, 50)}...`,
-          entityType: 'AIDirective',
-          observations: this.buildObservations(
-            d.text,
-            d.severity,
-            d.layerTags,
-            d.topics,
-            d.technologies,
-            d.isGenerated ? 'AI-Generated' : 'Manual',
-            d.confidence ? `Confidence: ${d.confidence}` : '',
-            d.reasoning || ''
-          )
-        })),
-        ...allEntities.patterns.map(p => ({
-          name: p.context || 'Pattern',
-          entityType: 'Pattern',
-          observations: this.buildObservations(p.snippet, p.topics)
-        }))
-      ]
-    });
-    
-    // Create relations
-    console.error(`💫 Creating relationships...`);
-    const relations = [];
-    
-    // Rule CONTAINS Section
-    for (const rule of allEntities.rules) {
-      for (const section of allEntities.sections) {
-        if (section.filePath === rule.filePath) {
-          relations.push({ from: rule.name, to: section.title, relationType: 'CONTAINS' });
-        }
-      }
-    }
-    
-    // Section CONTAINS AIDirective
-    for (const section of allEntities.sections) {
-      for (const directive of allEntities.directives) {
-        if (directive.filePath === section.filePath && directive.sectionTitle === section.title) {
-          relations.push({
-            from: section.title,
-            to: directive.text.substring(0, 50) + '...',
-            relationType: 'CONTAINS_AI_DIRECTIVE'
-          });
-        }
-      }
-    }
-    
-    // Rule CONTAINS AIDirective (for directives found in rule content)
-    for (const rule of allEntities.rules) {
-      for (const directive of allEntities.directives) {
-        if (directive.filePath === rule.filePath && directive.sectionTitle === rule.name) {
-          relations.push({
-            from: rule.name,
-            to: directive.text.substring(0, 50) + '...',
-            relationType: 'CONTAINS_AI_DIRECTIVE'
-          });
-        }
-      }
-    }
-    
-    // AIDirective APPLIES_TO Layer
-    for (const directive of allEntities.directives) {
-      for (const layer of directive.layerTags) {
-        relations.push({
-          from: directive.text.substring(0, 50) + '...',
-          to: layer,
-          relationType: 'APPLIES_TO'
-        });
-      }
-    }
-    
-    // AIDirective RELATES_TO Topic
-    for (const directive of allEntities.directives) {
-      for (const topic of directive.topics) {
-        relations.push({
-          from: directive.text.substring(0, 50) + '...',
-          to: topic,
-          relationType: 'RELATES_TO'
-        });
-      }
-    }
-    
-    const relationResult = await this.memoryManager.handleTool('memory.create_relations', {
-      relations
-    });
-    
-    console.error(`✅ AI-Enhanced knowledge graph crawling completed!`);
-    console.error(`   Total entities: ${allEntities.rules.length + allEntities.sections.length + allEntities.directives.length + allEntities.patterns.length}`);
-    console.error(`   Total relations: ${relations.length}`);
-    
+    console.error(`\n💾 Entity graph persisted incrementally`);
+    console.error(`   Entities stored (created/updated): ${totalEntitiesCreated}`);
+    console.error(`   Relations created: ${totalRelationsCreated}`);
+
+    console.error(`✅ Knowledge graph persisted (Rule/Section/Directive)`);
+
     return {
       indexed: {
-        rules: allEntities.rules.length,
-        sections: allEntities.sections.length,
-        directives: allEntities.directives.length,
-        patterns: allEntities.patterns.length
+        rules: 0, // Knowledge graph counts can be computed via db if needed
+        sections: 0,
+        directives: totalAIDirectives,
+        patterns: 0
       },
-      entities: entityResult,
-      relations: relationResult,
       files: markdownFiles,
       filesProcessed: totalFilesProcessed,
       warnings,
       errors,
+      entityStats: { entities: totalEntitiesCreated, relations: totalRelationsCreated },
       timestamp: new Date().toISOString()
     };
   }
   
   /**
-   * Recursively find markdown files in a directory
+   * Recursively find markdown files in a directory with pattern matching
    */
-  private findMarkdownFiles(dir: string, excludePatterns: string[]): string[] {
+  private findMarkdownFilesWithPattern(dir: string, pattern: string, excludePatterns: string[]): string[] {
     const files: string[] = [];
     
     try {
@@ -758,8 +804,8 @@ export class RuleManager {
         }
         
         if (entry.isDirectory()) {
-          files.push(...this.findMarkdownFiles(fullPath, excludePatterns));
-        } else if (entry.isFile() && entry.name.endsWith('.md')) {
+          files.push(...this.findMarkdownFilesWithPattern(fullPath, pattern, excludePatterns));
+        } else if (entry.isFile() && this.matchesPattern(fullPath, pattern)) {
           files.push(fullPath);
         }
       }
@@ -769,6 +815,43 @@ export class RuleManager {
     
     return files;
   }
+
+  /**
+   * Check if a file path matches a glob pattern
+   */
+  private matchesPattern(filePath: string, pattern: string): boolean {
+    const normalized = filePath.replace(/\\/g, '/');
+    // Convert glob pattern to regex (case-insensitive), supporting ** and windows separators
+    let regexStr = '';
+    for (let i = 0; i < pattern.length; i++) {
+      const ch = pattern[i];
+      const next = pattern[i + 1];
+      if (ch === '*' && next === '*') {
+        regexStr += '.*';
+        i++; // skip next
+        continue;
+      }
+      if (ch === '*') {
+        regexStr += '[^\\\\/]*';
+        continue;
+      }
+      if (ch === '/') {
+        regexStr += '[\\\\/]';
+        continue;
+      }
+      // Escape regex specials
+      if (/[-\\^$+?.()|{}\[\]]/.test(ch)) {
+        regexStr += '\\' + ch;
+      } else {
+        regexStr += ch;
+      }
+    }
+    const re = new RegExp('^' + regexStr + '$', 'i');
+    const ok = re.test(normalized);
+    // Debug for tests
+    try { if (process.env.VITEST) { console.error(`[matchesPattern] pattern=${pattern} regex=${re} path=${normalized} => ${ok}`); } } catch {}
+    return ok;
+  }
   
   /**
    * Check if a path matches any exclude pattern
@@ -777,13 +860,7 @@ export class RuleManager {
     const normalized = filePath.replace(/\\/g, '/');
     
     for (const pattern of excludePatterns) {
-      // Simple glob matching for common patterns
-      const regex = pattern
-        .replace(/\*\*/g, '.*')
-        .replace(/\*/g, '[^/]*')
-        .replace(/\//g, '[\\\\/]'); // Handle both / and \
-      
-      if (new RegExp(regex).test(normalized)) {
+      if (this.matchesPattern(normalized, pattern)) {
         return true;
       }
     }
@@ -1184,6 +1261,63 @@ Only return the JSON array, no other text.`;
     if (this.connection) {
       await this.connection.close();
       this.connection = null;
+    }
+  }
+
+  /**
+   * Dangerous: Reset/delete all indexed data for current workspace
+   */
+  private async resetIndex(): Promise<any> {
+    if (!this.connection) {
+      throw new Error('Connection not initialized');
+    }
+
+    const workspace = this.workspace;
+    const session = this.connection.getSession();
+
+    const stats: Record<string, number> = {} as any;
+
+    try {
+      // Count nodes to be deleted
+      const pre = await session.run(
+        'MATCH (n {workspace: $workspace}) RETURN count(n) AS c',
+        { workspace }
+      );
+      stats.toDelete = pre.records[0].get('c').toNumber();
+
+      console.error(`[reset_index] Deleting ${stats.toDelete} workspace-scoped nodes for workspace='${workspace}'`);
+
+      // Delete all workspace-scoped nodes (Rule, Section, Directive, Entity, etc.)
+      await session.run(
+        'MATCH (n {workspace: $workspace}) DETACH DELETE n',
+        { workspace }
+      );
+
+      // Clean up orphan taxonomy nodes (shared across workspaces, safe if orphan)
+      const topicDel = await session.run(
+        'MATCH (t:Topic) WHERE NOT (t)<-[:APPLIES_TO_TOPIC]-(:Directive) DETACH DELETE t RETURN count(t) as c'
+      );
+      const layerDel = await session.run(
+        'MATCH (l:Layer) WHERE NOT (l)<-[:APPLIES_TO_LAYER]-(:Directive) DETACH DELETE l RETURN count(l) as c'
+      );
+      const techDel = await session.run(
+        'MATCH (t:Technology) WHERE NOT (t)<-[:APPLIES_TO_TECHNOLOGY]-(:Directive) DETACH DELETE t RETURN count(t) as c'
+      );
+
+      stats.orphanTopicsDeleted = topicDel.records[0].get('c').toNumber();
+      stats.orphanLayersDeleted = layerDel.records[0].get('c').toNumber();
+      stats.orphanTechnologiesDeleted = techDel.records[0].get('c').toNumber();
+
+      return {
+        workspace,
+        deletedNodes: stats.toDelete,
+        orphanTopicsDeleted: stats.orphanTopicsDeleted,
+        orphanLayersDeleted: stats.orphanLayersDeleted,
+        orphanTechnologiesDeleted: stats.orphanTechnologiesDeleted,
+        timestamp: new Date().toISOString()
+      };
+    } finally {
+      await session.close();
     }
   }
 }

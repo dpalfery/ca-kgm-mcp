@@ -1,0 +1,1096 @@
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] Tool called: memory.rules.index_rules
+[context-iso] Routing to rule tool: memory.rules.index_rules
+🔍 DEBUG handleTool: name="memory.rules.index_rules"
+🔍 DEBUG: Routing to indexRules
+🔍 DEBUG: Checking environment variables...
+🔍 DEBUG: process.env keys: ["INDEX_EXCLUDE_PATTERNS","INDEX_FILE_PATTERN","INDEX_PATHS","QUERY_INCLUDE_BREADCRUMBS","QUERY_INCLUDE_METADATA","QUERY_MAX_ITEMS","QUERY_SEVERITY_FILTER","QUERY_TOKEN_BUDGET","WORKSPACE"]
+🔍 DEBUG: INDEX_PATHS = C:/git/bolt-hotshot-logistics/6-Docs,C:/git/bolt-hotshot-logistics/.kilocode/rules-old
+🔍 DEBUG: WORKSPACE = hotshot-logistics
+🔍 DEBUG: QUERY_MAX_ITEMS = 30
+[index_rules] Using filePattern: **/*.md
+[index_rules] Using excludePatterns: []
+[index_rules] Scanning inputPath=C:/git/bolt-hotshot-logistics/6-Docs -> resolved=C:\git\bolt-hotshot-logistics\6-Docs
+[index_rules] Dir matched files: 14 under C:\git\bolt-hotshot-logistics\6-Docs
+[index_rules] Scanning inputPath=C:/git/bolt-hotshot-logistics/.kilocode/rules-old -> resolved=C:\git\bolt-hotshot-logistics\.kilocode\rules-old
+[index_rules] Dir matched files: 12 under C:\git\bolt-hotshot-logistics\.kilocode\rules-old
+[index_rules] Total markdown files discovered: 26
+📁 Processing 26 markdown files...
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\ado-net-examples.md
+🤖 Running AI directive analysis on 4 sections...
+📊 File processing complete: 0 rules, 4 sections, 0 AI directives, 4 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\architecture-examples.md
+🤖 Running AI directive analysis on 5 sections...
+📊 File processing complete: 0 rules, 5 sections, 0 AI directives, 4 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\code-quality-examples.md
+🤖 Running AI directive analysis on 9 sections...
+   ✅ Found 1 AI directives in section: Local Development Configuration
+   ✅ Found 5 AI directives in section: Correlation ID Middleware
+📊 File processing complete: 0 rules, 9 sections, 6 AI directives, 6 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\process-examples.md
+🤖 Running AI directive analysis on 15 sections...
+   ✅ Found 2 AI directives in section: Hot Reload Development
+   ✅ Found 2 AI directives in section: Building
+   ✅ Found 2 AI directives in section: Running
+   ✅ Found 3 AI directives in section: Testing
+   ✅ Found 4 AI directives in section: Migration Commands
+   ✅ Found 2 AI directives in section: Migration Management
+   ✅ Found 3 AI directives in section: Package Management
+   ✅ Found 3 AI directives in section: Publishing
+   ✅ Found 2 AI directives in section: Docker Commands (if applicable)
+   ✅ Found 4 AI directives in section: Notes
+📊 File processing complete: 0 rules, 15 sections, 27 AI directives, 2 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\security-examples.md
+🤖 Running AI directive analysis on 10 sections...
+📊 File processing complete: 0 rules, 10 sections, 0 AI directives, 7 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\cli-usage.md
+🤖 Running AI directive analysis on 22 sections...
+   ✅ Found 3 AI directives in section: Overview
+   ✅ Found 6 AI directives in section: Command Line Options
+   ✅ Found 4 AI directives in section: Environment Variables
+   ✅ Found 4 AI directives in section: Secret Management
+   ✅ Found 9 AI directives in section: Common Issues
+   ✅ Found 4 AI directives in section: Exit Codes
+   ✅ Found 4 AI directives in section: Support
+📊 File processing complete: 0 rules, 22 sections, 34 AI directives, 11 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\design.md
+🤖 Running AI directive analysis on 16 sections...
+   ✅ Found 9 AI directives in section: Overview
+   ✅ Found 11 AI directives in section: CLI application structure (proposed)
+   ✅ Found 7 AI directives in section: Components and responsibilities (brief)
+   ✅ Found 6 AI directives in section: Scenario A — Fresh machine (no DB and no env var)
+   ✅ Found 4 AI directives in section: Scenario B — Existing DB or existing login (idempotent path)
+   ✅ Found 8 AI directives in section: Security design
+   ✅ Found 5 AI directives in section: SQL design (high-level examples)
+   ✅ Found 4 AI directives in section: Permissions model (recommendation)
+   ✅ Found 5 AI directives in section: Error handling and rollback
+   ✅ Found 8 AI directives in section: Privilege escalation and checks
+   ✅ Found 8 AI directives in section: Cross-platform and OS-specific considerations
+   ✅ Found 6 AI directives in section: CI considerations
+   ✅ Found 9 AI directives in section: Acceptance criteria for cross-platform
+   ✅ Found 3 AI directives in section: Implementation notes for developer
+   ✅ Found 3 AI directives in section: References
+📊 File processing complete: 0 rules, 16 sections, 96 AI directives, 2 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\requirements.md
+🤖 Running AI directive analysis on 10 sections...
+   ✅ Found 3 AI directives in section: Introduction
+   ✅ Found 4 AI directives in section: Goals
+   ✅ Found 3 AI directives in section: Actors
+   ✅ Found 4 AI directives in section: Success criteria
+   ✅ Found 9 AI directives in section: Non-functional requirements
+   ✅ Found 4 AI directives in section: Environment assumptions
+   ✅ Found 5 AI directives in section: Inputs (CLI parameters and environment)
+   ✅ Found 5 AI directives in section: Outputs / Artifacts
+   ✅ Found 4 AI directives in section: Acceptance criteria (EARS-style)
+📊 File processing complete: 0 rules, 10 sections, 41 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\security.md
+🤖 Running AI directive analysis on 0 sections...
+📊 File processing complete: 0 rules, 0 sections, 0 AI directives, 1 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\tasks.md
+🤖 Running AI directive analysis on 0 sections...
+📊 File processing complete: 0 rules, 0 sections, 0 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\testing.md
+🤖 Running AI directive analysis on 0 sections...
+📊 File processing complete: 0 rules, 0 sections, 0 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\hotshot-logistics-platform\design.md
+🤖 Running AI directive analysis on 48 sections...
+   ✅ Found 7 AI directives in section: Overview
+   ✅ Found 6 AI directives in section: Design Principles
+   ✅ Found 3 AI directives in section: Core Domain Models
+   ✅ Found 4 AI directives in section: Service Layer Interfaces
+   ✅ Found 4 AI directives in section: Horizontal Scaling
+   ✅ Found 3 AI directives in section: Vertical Scaling
+   ✅ Found 4 AI directives in section: Data Partitioning Strategy
+   ✅ Found 6 AI directives in section: Performance Targets
+   ✅ Found 5 AI directives in section: Zero-Downtime Deployment
+   ✅ Found 8 AI directives in section: Summary
+📊 File processing complete: 0 rules, 48 sections, 50 AI directives, 35 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\hotshot-logistics-platform\requirements.md
+🤖 Running AI directive analysis on 19 sections...
+   ✅ Found 5 AI directives in section: Introduction
+   ✅ Found 6 AI directives in section: 1. Job Management
+   ✅ Found 8 AI directives in section: 2. Driver Management
+   ✅ Found 8 AI directives in section: 3. Real-Time Tracking
+   ✅ Found 8 AI directives in section: 4. Mobile Driver Operations
+   ✅ Found 7 AI directives in section: 5. Customer Communication
+   ✅ Found 8 AI directives in section: 6. Analytics and Reporting
+   ✅ Found 8 AI directives in section: 7. User Authentication and Authorization
+   ✅ Found 8 AI directives in section: 8. System Performance and Reliability
+   ✅ Found 8 AI directives in section: 9. Integration Capabilities
+   ✅ Found 8 AI directives in section: 10. Data Management and Compliance
+   ✅ Found 8 AI directives in section: 11. Mobile Platform Support
+   ✅ Found 8 AI directives in section: 12. Notification Management
+   ✅ Found 7 AI directives in section: 13. Route Optimization
+   ✅ Found 8 AI directives in section: 14. Document Management
+   ✅ Found 10 AI directives in section: 15. Payment Processing
+   ✅ Found 14 AI directives in section: 16. Billing and Invoice Management
+   ✅ Found 10 AI directives in section: 17. Customer Account Management
+📊 File processing complete: 0 rules, 19 sections, 147 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\hotshot-logistics-platform\tasks.md
+🤖 Running AI directive analysis on 19 sections...
+   ✅ Found 7 AI directives in section: Backend Infrastructure Setup
+   ✅ Found 12 AI directives in section: Domain Models and Contracts
+   ✅ Found 12 AI directives in section: Repository Layer Implementation
+   ✅ Found 8 AI directives in section: Business Logic Services
+   ✅ Found 13 AI directives in section: API Layer Development
+   ✅ Found 11 AI directives in section: Real-time Communication
+   ✅ Found 10 AI directives in section: Authentication and Authorization
+   ✅ Found 12 AI directives in section: External Service Integrations
+   ✅ Found 10 AI directives in section: Data Validation and Error Handling
+   ✅ Found 9 AI directives in section: Caching and Performance
+   ✅ Found 6 AI directives in section: Background Processing
+   ✅ Found 8 AI directives in section: Testing Infrastructure
+   ✅ Found 6 AI directives in section: Admin Dashboard Frontend
+   ✅ Found 16 AI directives in section: Mobile App Development
+   ✅ Found 4 AI directives in section: Analytics and Reporting
+   ✅ Found 9 AI directives in section: Monitoring and Observability
+   ✅ Found 8 AI directives in section: Security Hardening
+   ✅ Found 8 AI directives in section: Deployment and DevOps
+   ✅ Found 7 AI directives in section: Integration and End-to-End Testing
+📊 File processing complete: 0 rules, 19 sections, 176 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\architecture-general.md
+🤖 Running AI directive analysis on 6 sections...
+   ✅ Found 6 AI directives in section: **2-Application Layer**
+   ✅ Found 4 AI directives in section: **3-Domain Layer**
+   ✅ Found 8 AI directives in section: **4-Persistence Layer**
+   ✅ Found 6 AI directives in section: **5-Infrastructure / Shared Layer (optional)**
+   ✅ Found 3 AI directives in section: **6-Docs**
+   ✅ Found 3 AI directives in section: **7-Deployment**
+   ✅ Found 7 AI directives in rule: Folder-Rule
+📊 File processing complete: 1 rules, 6 sections, 37 AI directives, 1 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\base-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 9 AI directives in rule: MUST-READ-Rule
+📊 File processing complete: 1 rules, 0 sections, 9 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\code-quality-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 13 AI directives in rule: Code-Quality-Rule
+📊 File processing complete: 1 rules, 0 sections, 13 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\architecture.md
+🤖 Running AI directive analysis on 7 sections...
+   ✅ Found 3 AI directives in section: System Architecture Overview
+   ✅ Found 11 AI directives in section: Key Technical Decisions
+   ✅ Found 7 AI directives in section: Component Architecture
+   ✅ Found 9 AI directives in section: Data Architecture
+   ✅ Found 5 AI directives in section: Integration Architecture
+   ✅ Found 7 AI directives in section: Performance Architecture
+   ✅ Found 9 AI directives in section: Deployment Architecture
+📊 File processing complete: 0 rules, 7 sections, 51 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\brief.md
+🤖 Running AI directive analysis on 9 sections...
+   ✅ Found 7 AI directives in section: Project Foundation
+   ✅ Found 4 AI directives in section: Core Problem Statement
+   ✅ Found 6 AI directives in section: 1. Admin Dashboard (Next.js/React)
+   ✅ Found 5 AI directives in section: 2. Driver Mobile App (React Native/Expo)
+   ✅ Found 5 AI directives in section: 3. Backend API (.NET 8, ASP.NET Core Web API, Azure App Services)
+   ✅ Found 6 AI directives in section: Key Business Objectives
+   ✅ Found 6 AI directives in section: Success Metrics
+   ✅ Found 4 AI directives in section: Target Users
+📊 File processing complete: 0 rules, 9 sections, 43 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\context.md
+🤖 Running AI directive analysis on 7 sections...
+   ✅ Found 2 AI directives in section: Current Work Focus
+   ✅ Found 15 AI directives in section: ✅ Completed Components
+   ✅ Found 9 AI directives in section: 🔄 In Progress Components
+   ✅ Found 12 AI directives in section: 📋 Next Priority Tasks
+   ✅ Found 3 AI directives in section: Current Development State
+   ✅ Found 5 AI directives in section: Key Technical Achievements
+📊 File processing complete: 0 rules, 7 sections, 46 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\product.md
+🤖 Running AI directive analysis on 19 sections...
+   ✅ Found 4 AI directives in section: Why This Product Exists
+   ✅ Found 3 AI directives in section: 1. Operational Inefficiency
+   ✅ Found 5 AI directives in section: 2. Limited Visibility
+   ✅ Found 2 AI directives in section: 3. Communication Gaps
+   ✅ Found 2 AI directives in section: 4. Financial Management Complexity
+   ✅ Found 1 AI directives in section: 5. Scalability Limitations
+   ✅ Found 6 AI directives in section: End-to-End Workflow
+   ✅ Found 8 AI directives in section: Key Features by Component
+   ✅ Found 5 AI directives in section: For Logistics Managers
+   ✅ Found 5 AI directives in section: For Drivers
+   ✅ Found 5 AI directives in section: For Customers
+   ✅ Found 5 AI directives in section: Performance Standards
+   ✅ Found 5 AI directives in section: Integration Capabilities
+   ✅ Found 5 AI directives in section: Competitive Advantages
+   ✅ Found 8 AI directives in section: Success Metrics
+📊 File processing complete: 0 rules, 19 sections, 69 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\tech.md
+🤖 Running AI directive analysis on 9 sections...
+   ✅ Found 2 AI directives in section: Custom Kilocode Modes
+   ✅ Found 5 AI directives in section: Backend (.NET)
+   ✅ Found 5 AI directives in section: Frontend (Admin Dashboard)
+   ✅ Found 9 AI directives in section: Mobile (Driver App)
+   ✅ Found 5 AI directives in section: Infrastructure
+   ✅ Found 7 AI directives in section: External Service Integrations
+   ✅ Found 6 AI directives in section: Key Dependencies and Patterns
+   ✅ Found 12 AI directives in section: Development Environment Setup
+📊 File processing complete: 0 rules, 9 sections, 51 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank-instructions.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 8 AI directives in rule: memory-bank-instructions
+📊 File processing complete: 1 rules, 0 sections, 8 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\process-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 5 AI directives in rule: Process-General-Rule
+📊 File processing complete: 1 rules, 0 sections, 5 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\security-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 9 AI directives in rule: Security-General-Rule
+📊 File processing complete: 1 rules, 0 sections, 9 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\testing-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 24 AI directives in rule: Testing-General-Rule
+📊 File processing complete: 1 rules, 0 sections, 24 AI directives, 0 patterns
+
+📊 AI-Enhanced Crawling Summary:
+   Files processed: 26
+   Rules found: 7
+   Sections found: 234
+   AI Directives generated: 942
+   Patterns found: 73
+
+💾 Storing entities in Neo4j...
+💫 Creating relationships...
+✅ AI-Enhanced knowledge graph crawling completed!
+   Total entities: 1256
+   Total relations: 10304
+[context-iso] Rule tool completed, returning result
+[context-iso] Tool called: memory.rules.query_directives
+[context-iso] Routing to rule tool: memory.rules.query_directives
+🔍 DEBUG handleTool: name="memory.rules.query_directives"
+🔍 DEBUG: Routing to queryDirectives
+Error in queryDirectives: {}
+[context-iso] Tool error: {}
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] Tool called: memory.rules.reset_index
+[context-iso] Routing to rule tool: memory.rules.reset_index
+🔍 DEBUG handleTool: name="memory.rules.reset_index"
+🔍 DEBUG: Routing to resetIndex
+[reset_index] Deleting 1161 workspace-scoped nodes for workspace='hotshot-logistics'
+[context-iso] Rule tool completed, returning result
+[context-iso] Tool called: memory.rules.index_rules
+[context-iso] Routing to rule tool: memory.rules.index_rules
+🔍 DEBUG handleTool: name="memory.rules.index_rules"
+🔍 DEBUG: Routing to indexRules
+🔍 DEBUG: Checking environment variables...
+🔍 DEBUG: process.env keys: ["INDEX_EXCLUDE_PATTERNS","INDEX_FILE_PATTERN","INDEX_PATHS","QUERY_INCLUDE_BREADCRUMBS","QUERY_INCLUDE_METADATA","QUERY_MAX_ITEMS","QUERY_SEVERITY_FILTER","QUERY_TOKEN_BUDGET","WORKSPACE"]
+🔍 DEBUG: INDEX_PATHS = C:/git/bolt-hotshot-logistics/6-Docs,C:/git/bolt-hotshot-logistics/.kilocode/rules-old
+🔍 DEBUG: WORKSPACE = hotshot-logistics
+🔍 DEBUG: QUERY_MAX_ITEMS = 30
+[index_rules] Using filePattern: **/*.md
+[index_rules] Using excludePatterns: []
+[index_rules] Scanning inputPath=C:/git/bolt-hotshot-logistics/6-Docs -> resolved=C:\git\bolt-hotshot-logistics\6-Docs
+[index_rules] Dir matched files: 14 under C:\git\bolt-hotshot-logistics\6-Docs
+[index_rules] Scanning inputPath=C:/git/bolt-hotshot-logistics/.kilocode/rules-old -> resolved=C:\git\bolt-hotshot-logistics\.kilocode\rules-old
+[index_rules] Dir matched files: 12 under C:\git\bolt-hotshot-logistics\.kilocode\rules-old
+[index_rules] Total markdown files discovered: 26
+📁 Processing 26 markdown files...
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\ado-net-examples.md
+🤖 Running AI directive analysis on 4 sections...
+📊 File processing complete: 0 rules, 4 sections, 0 AI directives, 4 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\architecture-examples.md
+🤖 Running AI directive analysis on 5 sections...
+📊 File processing complete: 0 rules, 5 sections, 0 AI directives, 4 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\code-quality-examples.md
+🤖 Running AI directive analysis on 9 sections...
+   ✅ Found 1 AI directives in section: Local Development Configuration
+   ✅ Found 5 AI directives in section: Correlation ID Middleware
+📊 File processing complete: 0 rules, 9 sections, 6 AI directives, 6 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\process-examples.md
+🤖 Running AI directive analysis on 15 sections...
+   ✅ Found 2 AI directives in section: Hot Reload Development
+   ✅ Found 2 AI directives in section: Building
+   ✅ Found 2 AI directives in section: Running
+   ✅ Found 3 AI directives in section: Testing
+   ✅ Found 4 AI directives in section: Migration Commands
+   ✅ Found 2 AI directives in section: Migration Management
+   ✅ Found 3 AI directives in section: Package Management
+   ✅ Found 3 AI directives in section: Publishing
+   ✅ Found 2 AI directives in section: Docker Commands (if applicable)
+   ✅ Found 4 AI directives in section: Notes
+📊 File processing complete: 0 rules, 15 sections, 27 AI directives, 2 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\security-examples.md
+🤖 Running AI directive analysis on 10 sections...
+📊 File processing complete: 0 rules, 10 sections, 0 AI directives, 7 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\cli-usage.md
+🤖 Running AI directive analysis on 22 sections...
+   ✅ Found 4 AI directives in section: Overview
+   ✅ Found 5 AI directives in section: Command Line Options
+   ✅ Found 4 AI directives in section: Environment Variables
+   ✅ Found 4 AI directives in section: Secret Management
+   ✅ Found 9 AI directives in section: Common Issues
+   ✅ Found 4 AI directives in section: Exit Codes
+   ✅ Found 4 AI directives in section: Support
+📊 File processing complete: 0 rules, 22 sections, 34 AI directives, 11 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\design.md
+🤖 Running AI directive analysis on 16 sections...
+   ✅ Found 6 AI directives in section: Overview
+   ✅ Found 10 AI directives in section: CLI application structure (proposed)
+   ✅ Found 5 AI directives in section: Components and responsibilities (brief)
+   ✅ Found 6 AI directives in section: Scenario A — Fresh machine (no DB and no env var)
+   ✅ Found 4 AI directives in section: Scenario B — Existing DB or existing login (idempotent path)
+   ✅ Found 8 AI directives in section: Security design
+   ✅ Found 7 AI directives in section: SQL design (high-level examples)
+   ✅ Found 4 AI directives in section: Permissions model (recommendation)
+   ✅ Found 5 AI directives in section: Error handling and rollback
+   ✅ Found 6 AI directives in section: Privilege escalation and checks
+   ✅ Found 8 AI directives in section: Cross-platform and OS-specific considerations
+   ✅ Found 4 AI directives in section: CI considerations
+   ✅ Found 9 AI directives in section: Acceptance criteria for cross-platform
+   ✅ Found 3 AI directives in section: Implementation notes for developer
+   ✅ Found 3 AI directives in section: References
+📊 File processing complete: 0 rules, 16 sections, 88 AI directives, 2 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\requirements.md
+🤖 Running AI directive analysis on 10 sections...
+   ✅ Found 2 AI directives in section: Introduction
+   ✅ Found 4 AI directives in section: Goals
+   ✅ Found 3 AI directives in section: Actors
+   ✅ Found 4 AI directives in section: Success criteria
+   ✅ Found 9 AI directives in section: Non-functional requirements
+   ✅ Found 4 AI directives in section: Environment assumptions
+   ✅ Found 5 AI directives in section: Inputs (CLI parameters and environment)
+   ✅ Found 5 AI directives in section: Outputs / Artifacts
+   ✅ Found 5 AI directives in section: Acceptance criteria (EARS-style)
+📊 File processing complete: 0 rules, 10 sections, 41 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\security.md
+🤖 Running AI directive analysis on 0 sections...
+📊 File processing complete: 0 rules, 0 sections, 0 AI directives, 1 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\tasks.md
+🤖 Running AI directive analysis on 0 sections...
+📊 File processing complete: 0 rules, 0 sections, 0 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\testing.md
+🤖 Running AI directive analysis on 0 sections...
+📊 File processing complete: 0 rules, 0 sections, 0 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\hotshot-logistics-platform\design.md
+🤖 Running AI directive analysis on 48 sections...
+   ✅ Found 6 AI directives in section: Overview
+   ✅ Found 7 AI directives in section: Design Principles
+   ✅ Found 4 AI directives in section: Core Domain Models
+   ✅ Found 5 AI directives in section: Service Layer Interfaces
+   ✅ Found 4 AI directives in section: Horizontal Scaling
+   ✅ Found 3 AI directives in section: Vertical Scaling
+   ✅ Found 4 AI directives in section: Data Partitioning Strategy
+   ✅ Found 6 AI directives in section: Performance Targets
+   ✅ Found 5 AI directives in section: Zero-Downtime Deployment
+   ✅ Found 9 AI directives in section: Summary
+📊 File processing complete: 0 rules, 48 sections, 53 AI directives, 35 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\hotshot-logistics-platform\requirements.md
+🤖 Running AI directive analysis on 19 sections...
+   ✅ Found 7 AI directives in section: Introduction
+   ✅ Found 5 AI directives in section: 1. Job Management
+   ✅ Found 8 AI directives in section: 2. Driver Management
+   ✅ Found 8 AI directives in section: 3. Real-Time Tracking
+   ✅ Found 8 AI directives in section: 4. Mobile Driver Operations
+   ✅ Found 8 AI directives in section: 5. Customer Communication
+   ✅ Found 8 AI directives in section: 6. Analytics and Reporting
+   ✅ Found 8 AI directives in section: 7. User Authentication and Authorization
+   ✅ Found 8 AI directives in section: 8. System Performance and Reliability
+   ✅ Found 8 AI directives in section: 9. Integration Capabilities
+   ✅ Found 8 AI directives in section: 10. Data Management and Compliance
+   ✅ Found 8 AI directives in section: 11. Mobile Platform Support
+   ✅ Found 8 AI directives in section: 12. Notification Management
+   ✅ Found 7 AI directives in section: 13. Route Optimization
+   ✅ Found 8 AI directives in section: 14. Document Management
+   ✅ Found 10 AI directives in section: 15. Payment Processing
+   ✅ Found 14 AI directives in section: 16. Billing and Invoice Management
+   ✅ Found 10 AI directives in section: 17. Customer Account Management
+📊 File processing complete: 0 rules, 19 sections, 149 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\hotshot-logistics-platform\tasks.md
+🤖 Running AI directive analysis on 19 sections...
+   ✅ Found 7 AI directives in section: Backend Infrastructure Setup
+   ✅ Found 12 AI directives in section: Domain Models and Contracts
+   ✅ Found 9 AI directives in section: Repository Layer Implementation
+   ✅ Found 9 AI directives in section: Business Logic Services
+   ✅ Found 11 AI directives in section: API Layer Development
+   ✅ Found 11 AI directives in section: Real-time Communication
+   ✅ Found 10 AI directives in section: Authentication and Authorization
+   ✅ Found 12 AI directives in section: External Service Integrations
+   ✅ Found 10 AI directives in section: Data Validation and Error Handling
+   ✅ Found 9 AI directives in section: Caching and Performance
+   ✅ Found 6 AI directives in section: Background Processing
+   ✅ Found 8 AI directives in section: Testing Infrastructure
+   ✅ Found 6 AI directives in section: Admin Dashboard Frontend
+   ✅ Found 16 AI directives in section: Mobile App Development
+   ✅ Found 4 AI directives in section: Analytics and Reporting
+   ✅ Found 9 AI directives in section: Monitoring and Observability
+   ✅ Found 11 AI directives in section: Security Hardening
+   ✅ Found 8 AI directives in section: Deployment and DevOps
+   ✅ Found 7 AI directives in section: Integration and End-to-End Testing
+📊 File processing complete: 0 rules, 19 sections, 175 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\architecture-general.md
+🤖 Running AI directive analysis on 6 sections...
+   ✅ Found 6 AI directives in section: **2-Application Layer**
+   ✅ Found 3 AI directives in section: **3-Domain Layer**
+   ✅ Found 8 AI directives in section: **4-Persistence Layer**
+   ✅ Found 6 AI directives in section: **5-Infrastructure / Shared Layer (optional)**
+   ✅ Found 3 AI directives in section: **6-Docs**
+   ✅ Found 3 AI directives in section: **7-Deployment**
+   ✅ Found 7 AI directives in rule: Folder-Rule
+📊 File processing complete: 1 rules, 6 sections, 36 AI directives, 1 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\base-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 9 AI directives in rule: MUST-READ-Rule
+📊 File processing complete: 1 rules, 0 sections, 9 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\code-quality-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 21 AI directives in rule: Code-Quality-Rule
+📊 File processing complete: 1 rules, 0 sections, 21 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\architecture.md
+🤖 Running AI directive analysis on 7 sections...
+   ✅ Found 4 AI directives in section: System Architecture Overview
+   ✅ Found 11 AI directives in section: Key Technical Decisions
+   ✅ Found 10 AI directives in section: Component Architecture
+   ✅ Found 9 AI directives in section: Data Architecture
+   ✅ Found 4 AI directives in section: Integration Architecture
+   ✅ Found 8 AI directives in section: Performance Architecture
+   ✅ Found 7 AI directives in section: Deployment Architecture
+📊 File processing complete: 0 rules, 7 sections, 53 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\brief.md
+🤖 Running AI directive analysis on 9 sections...
+   ✅ Found 10 AI directives in section: Project Foundation
+   ✅ Found 3 AI directives in section: Core Problem Statement
+   ✅ Found 6 AI directives in section: 1. Admin Dashboard (Next.js/React)
+   ✅ Found 5 AI directives in section: 2. Driver Mobile App (React Native/Expo)
+   ✅ Found 5 AI directives in section: 3. Backend API (.NET 8, ASP.NET Core Web API, Azure App Services)
+   ✅ Found 4 AI directives in section: Key Business Objectives
+   ✅ Found 6 AI directives in section: Success Metrics
+   ✅ Found 7 AI directives in section: Target Users
+📊 File processing complete: 0 rules, 9 sections, 46 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\context.md
+🤖 Running AI directive analysis on 7 sections...
+   ✅ Found 6 AI directives in section: Current Work Focus
+   ✅ Found 7 AI directives in section: ✅ Completed Components
+   ✅ Found 6 AI directives in section: 🔄 In Progress Components
+   ✅ Found 12 AI directives in section: 📋 Next Priority Tasks
+   ✅ Found 3 AI directives in section: Current Development State
+   ✅ Found 4 AI directives in section: Key Technical Achievements
+📊 File processing complete: 0 rules, 7 sections, 38 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\product.md
+🤖 Running AI directive analysis on 19 sections...
+   ✅ Found 3 AI directives in section: Why This Product Exists
+   ✅ Found 4 AI directives in section: 1. Operational Inefficiency
+   ✅ Found 5 AI directives in section: 2. Limited Visibility
+   ✅ Found 1 AI directives in section: 3. Communication Gaps
+   ✅ Found 2 AI directives in section: 4. Financial Management Complexity
+   ✅ Found 1 AI directives in section: 5. Scalability Limitations
+   ✅ Found 5 AI directives in section: End-to-End Workflow
+   ✅ Found 8 AI directives in section: Key Features by Component
+   ✅ Found 5 AI directives in section: For Logistics Managers
+   ✅ Found 4 AI directives in section: For Drivers
+   ✅ Found 4 AI directives in section: For Customers
+   ✅ Found 5 AI directives in section: Performance Standards
+   ✅ Found 5 AI directives in section: Integration Capabilities
+   ✅ Found 4 AI directives in section: Competitive Advantages
+   ✅ Found 8 AI directives in section: Success Metrics
+📊 File processing complete: 0 rules, 19 sections, 64 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\tech.md
+🤖 Running AI directive analysis on 9 sections...
+   ✅ Found 2 AI directives in section: Custom Kilocode Modes
+   ✅ Found 5 AI directives in section: Backend (.NET)
+   ✅ Found 7 AI directives in section: Frontend (Admin Dashboard)
+   ✅ Found 7 AI directives in section: Mobile (Driver App)
+   ✅ Found 5 AI directives in section: Infrastructure
+   ✅ Found 5 AI directives in section: External Service Integrations
+   ✅ Found 7 AI directives in section: Key Dependencies and Patterns
+   ✅ Found 12 AI directives in section: Development Environment Setup
+📊 File processing complete: 0 rules, 9 sections, 50 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank-instructions.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 8 AI directives in rule: memory-bank-instructions
+📊 File processing complete: 1 rules, 0 sections, 8 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\process-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 7 AI directives in rule: Process-General-Rule
+📊 File processing complete: 1 rules, 0 sections, 7 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\security-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 10 AI directives in rule: Security-General-Rule
+📊 File processing complete: 1 rules, 0 sections, 10 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\testing-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 16 AI directives in rule: Testing-General-Rule
+📊 File processing complete: 1 rules, 0 sections, 16 AI directives, 0 patterns
+
+📊 AI-Enhanced Crawling Summary:
+   Files processed: 26
+   Rules found: 7
+   Sections found: 234
+   AI Directives generated: 931
+   Patterns found: 73
+
+💾 Storing entities in Neo4j...
+💫 Creating relationships...
+✅ AI-Enhanced knowledge graph crawling completed!
+   Total entities: 1245
+   Total relations: 10238
+[context-iso] Rule tool completed, returning result
+[context-iso] Tool called: memory.rules.query_directives
+[context-iso] Routing to rule tool: memory.rules.query_directives
+🔍 DEBUG handleTool: name="memory.rules.query_directives"
+🔍 DEBUG: Routing to queryDirectives
+Error in queryDirectives: {}
+[context-iso] Tool error: {}
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] Tool called: memory.rules.query_directives
+[context-iso] Routing to rule tool: memory.rules.query_directives
+🔍 DEBUG handleTool: name="memory.rules.query_directives"
+🔍 DEBUG: Routing to queryDirectives
+Error in queryDirectives: {}
+[context-iso] Tool error: {}
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] Tool called: memory.rules.query_directives
+[context-iso] Routing to rule tool: memory.rules.query_directives
+🔍 DEBUG handleTool: name="memory.rules.query_directives"
+🔍 DEBUG: Routing to queryDirectives
+Error in queryDirectives: {"msg":"No rules found in knowledge base. Please load rules using the memory.rules.upsert_markdown tool before querying.","stack":"Error: No rules found in knowledge base. Please load rules using the memory.rules.upsert_markdown tool before querying.\n    at RuleManager.generateFallbackResponse (file:///C:/git/contextiso/1-Presentation/dist/src/rules/rule-manager.js:277:15)\n    at RuleManager.queryDirectives (file:///C:/git/contextiso/1-Presentation/dist/src/rules/rule-manager.js:156:29)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async RuleManager.handleTool (file:///C:/git/contextiso/1-Presentation/dist/src/rules/rule-manager.js:82:24)\n    at async ContextISOServer.handleRuleTool (file:///C:/git/contextiso/1-Presentation/dist/src/index.js:189:24)\n    at async file:///C:/git/contextiso/1-Presentation/dist/src/index.js:151:36","args":{"userPrompt":"Update the Hotshot Logistics Admin Dashboard UI and backend to include four new job status cards (Pending, Assigned, EnRoute, Received) with specific colors and icons. Need to extend backend models, DTOs, service layer, repository logic, and create new Next.js component with TailwindCSS. Ensure end-to-end data flow from database to frontend display.","modeSlug":"code"}}
+[context-iso] Tool error: {}
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] Tool called: memory.rules.reset_index
+[context-iso] Routing to rule tool: memory.rules.reset_index
+🔍 DEBUG handleTool: name="memory.rules.reset_index"
+🔍 DEBUG: Routing to resetIndex
+[reset_index] Deleting 1173 workspace-scoped nodes for workspace='hotshot-logistics'
+[context-iso] Rule tool completed, returning result
+[context-iso] Tool called: memory.rules.index_rules
+[context-iso] Routing to rule tool: memory.rules.index_rules
+🔍 DEBUG handleTool: name="memory.rules.index_rules"
+🔍 DEBUG: Routing to indexRules
+🔍 DEBUG: Checking environment variables...
+🔍 DEBUG: process.env keys: ["INDEX_EXCLUDE_PATTERNS","INDEX_FILE_PATTERN","INDEX_PATHS","QUERY_INCLUDE_BREADCRUMBS","QUERY_INCLUDE_METADATA","QUERY_MAX_ITEMS","QUERY_SEVERITY_FILTER","QUERY_TOKEN_BUDGET","WORKSPACE"]
+🔍 DEBUG: INDEX_PATHS = C:/git/bolt-hotshot-logistics/6-Docs,C:/git/bolt-hotshot-logistics/.kilocode/rules-old
+🔍 DEBUG: WORKSPACE = hotshot-logistics
+🔍 DEBUG: QUERY_MAX_ITEMS = 30
+[index_rules] Using filePattern: **/*.md
+[index_rules] Using excludePatterns: []
+[index_rules] Scanning inputPath=C:/git/bolt-hotshot-logistics/6-Docs -> resolved=C:\git\bolt-hotshot-logistics\6-Docs
+[index_rules] Dir matched files: 14 under C:\git\bolt-hotshot-logistics\6-Docs
+[index_rules] Scanning inputPath=C:/git/bolt-hotshot-logistics/.kilocode/rules-old -> resolved=C:\git\bolt-hotshot-logistics\.kilocode\rules-old
+[index_rules] Dir matched files: 12 under C:\git\bolt-hotshot-logistics\.kilocode\rules-old
+[index_rules] Total markdown files discovered: 26
+📁 Processing 26 markdown files...
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\ado-net-examples.md
+🤖 Running AI directive analysis on 4 sections...
+📊 File processing complete: 0 rules, 4 sections, 0 AI directives, 4 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\architecture-examples.md
+🤖 Running AI directive analysis on 5 sections...
+📊 File processing complete: 0 rules, 5 sections, 0 AI directives, 4 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\code-quality-examples.md
+🤖 Running AI directive analysis on 9 sections...
+   ✅ Found 1 AI directives in section: Local Development Configuration
+   ✅ Found 5 AI directives in section: Correlation ID Middleware
+📊 File processing complete: 0 rules, 9 sections, 6 AI directives, 6 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\process-examples.md
+🤖 Running AI directive analysis on 15 sections...
+   ✅ Found 2 AI directives in section: Hot Reload Development
+   ✅ Found 2 AI directives in section: Building
+   ✅ Found 2 AI directives in section: Running
+   ✅ Found 3 AI directives in section: Testing
+   ✅ Found 4 AI directives in section: Migration Commands
+   ✅ Found 2 AI directives in section: Migration Management
+   ✅ Found 3 AI directives in section: Package Management
+   ✅ Found 3 AI directives in section: Publishing
+   ✅ Found 2 AI directives in section: Docker Commands (if applicable)
+   ✅ Found 4 AI directives in section: Notes
+📊 File processing complete: 0 rules, 15 sections, 27 AI directives, 2 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\security-examples.md
+🤖 Running AI directive analysis on 10 sections...
+📊 File processing complete: 0 rules, 10 sections, 0 AI directives, 7 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\cli-usage.md
+🤖 Running AI directive analysis on 22 sections...
+   ✅ Found 3 AI directives in section: Overview
+   ✅ Found 5 AI directives in section: Command Line Options
+   ✅ Found 2 AI directives in section: Environment Variables
+   ✅ Found 4 AI directives in section: Secret Management
+   ✅ Found 9 AI directives in section: Common Issues
+   ✅ Found 4 AI directives in section: Exit Codes
+   ✅ Found 4 AI directives in section: Support
+📊 File processing complete: 0 rules, 22 sections, 31 AI directives, 11 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\design.md
+🤖 Running AI directive analysis on 16 sections...
+   ✅ Found 4 AI directives in section: Overview
+   ✅ Found 10 AI directives in section: CLI application structure (proposed)
+   ✅ Found 7 AI directives in section: Components and responsibilities (brief)
+   ✅ Found 6 AI directives in section: Scenario A — Fresh machine (no DB and no env var)
+   ✅ Found 4 AI directives in section: Scenario B — Existing DB or existing login (idempotent path)
+   ✅ Found 6 AI directives in section: Security design
+   ✅ Found 6 AI directives in section: SQL design (high-level examples)
+   ✅ Found 4 AI directives in section: Permissions model (recommendation)
+   ✅ Found 5 AI directives in section: Error handling and rollback
+   ✅ Found 7 AI directives in section: Privilege escalation and checks
+   ✅ Found 7 AI directives in section: Cross-platform and OS-specific considerations
+   ✅ Found 4 AI directives in section: CI considerations
+   ✅ Found 8 AI directives in section: Acceptance criteria for cross-platform
+   ✅ Found 3 AI directives in section: Implementation notes for developer
+   ✅ Found 3 AI directives in section: References
+📊 File processing complete: 0 rules, 16 sections, 84 AI directives, 2 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\requirements.md
+🤖 Running AI directive analysis on 10 sections...
+   ✅ Found 3 AI directives in section: Introduction
+   ✅ Found 4 AI directives in section: Goals
+   ✅ Found 3 AI directives in section: Actors
+   ✅ Found 4 AI directives in section: Success criteria
+   ✅ Found 9 AI directives in section: Non-functional requirements
+   ✅ Found 4 AI directives in section: Environment assumptions
+   ✅ Found 8 AI directives in section: Inputs (CLI parameters and environment)
+   ✅ Found 5 AI directives in section: Outputs / Artifacts
+   ✅ Found 5 AI directives in section: Acceptance criteria (EARS-style)
+📊 File processing complete: 0 rules, 10 sections, 45 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\security.md
+🤖 Running AI directive analysis on 0 sections...
+📊 File processing complete: 0 rules, 0 sections, 0 AI directives, 1 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\tasks.md
+🤖 Running AI directive analysis on 0 sections...
+📊 File processing complete: 0 rules, 0 sections, 0 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\dbsetup\testing.md
+🤖 Running AI directive analysis on 0 sections...
+📊 File processing complete: 0 rules, 0 sections, 0 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\hotshot-logistics-platform\design.md
+🤖 Running AI directive analysis on 48 sections...
+   ✅ Found 7 AI directives in section: Overview
+   ✅ Found 7 AI directives in section: Design Principles
+   ✅ Found 4 AI directives in section: Core Domain Models
+   ✅ Found 3 AI directives in section: Service Layer Interfaces
+   ✅ Found 4 AI directives in section: Horizontal Scaling
+   ✅ Found 3 AI directives in section: Vertical Scaling
+   ✅ Found 4 AI directives in section: Data Partitioning Strategy
+   ✅ Found 6 AI directives in section: Performance Targets
+   ✅ Found 5 AI directives in section: Zero-Downtime Deployment
+   ✅ Found 8 AI directives in section: Summary
+📊 File processing complete: 0 rules, 48 sections, 51 AI directives, 35 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\hotshot-logistics-platform\requirements.md
+🤖 Running AI directive analysis on 19 sections...
+   ✅ Found 9 AI directives in section: Introduction
+   ✅ Found 7 AI directives in section: 1. Job Management
+   ✅ Found 8 AI directives in section: 2. Driver Management
+   ✅ Found 8 AI directives in section: 3. Real-Time Tracking
+   ✅ Found 7 AI directives in section: 4. Mobile Driver Operations
+   ✅ Found 8 AI directives in section: 5. Customer Communication
+   ✅ Found 8 AI directives in section: 6. Analytics and Reporting
+   ✅ Found 8 AI directives in section: 7. User Authentication and Authorization
+   ✅ Found 8 AI directives in section: 8. System Performance and Reliability
+   ✅ Found 8 AI directives in section: 9. Integration Capabilities
+   ✅ Found 8 AI directives in section: 10. Data Management and Compliance
+   ✅ Found 8 AI directives in section: 11. Mobile Platform Support
+   ✅ Found 8 AI directives in section: 12. Notification Management
+   ✅ Found 8 AI directives in section: 13. Route Optimization
+   ✅ Found 8 AI directives in section: 14. Document Management
+   ✅ Found 10 AI directives in section: 15. Payment Processing
+   ✅ Found 14 AI directives in section: 16. Billing and Invoice Management
+   ✅ Found 10 AI directives in section: 17. Customer Account Management
+📊 File processing complete: 0 rules, 19 sections, 153 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\6-Docs\specs\hotshot-logistics-platform\tasks.md
+🤖 Running AI directive analysis on 19 sections...
+   ✅ Found 9 AI directives in section: Backend Infrastructure Setup
+   ✅ Found 12 AI directives in section: Domain Models and Contracts
+   ✅ Found 9 AI directives in section: Repository Layer Implementation
+   ✅ Found 16 AI directives in section: Business Logic Services
+   ✅ Found 16 AI directives in section: API Layer Development
+   ✅ Found 11 AI directives in section: Real-time Communication
+   ✅ Found 10 AI directives in section: Authentication and Authorization
+   ✅ Found 12 AI directives in section: External Service Integrations
+   ✅ Found 10 AI directives in section: Data Validation and Error Handling
+   ✅ Found 9 AI directives in section: Caching and Performance
+   ✅ Found 11 AI directives in section: Background Processing
+   ✅ Found 8 AI directives in section: Testing Infrastructure
+   ✅ Found 15 AI directives in section: Admin Dashboard Frontend
+   ✅ Found 9 AI directives in section: Mobile App Development
+   ✅ Found 4 AI directives in section: Analytics and Reporting
+   ✅ Found 9 AI directives in section: Monitoring and Observability
+   ✅ Found 9 AI directives in section: Security Hardening
+   ✅ Found 8 AI directives in section: Deployment and DevOps
+   ✅ Found 9 AI directives in section: Integration and End-to-End Testing
+📊 File processing complete: 0 rules, 19 sections, 196 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\architecture-general.md
+🤖 Running AI directive analysis on 6 sections...
+   ✅ Found 7 AI directives in section: **2-Application Layer**
+   ✅ Found 5 AI directives in section: **3-Domain Layer**
+   ✅ Found 8 AI directives in section: **4-Persistence Layer**
+   ✅ Found 5 AI directives in section: **5-Infrastructure / Shared Layer (optional)**
+   ✅ Found 4 AI directives in section: **6-Docs**
+   ✅ Found 4 AI directives in section: **7-Deployment**
+   ✅ Found 7 AI directives in rule: Folder-Rule
+📊 File processing complete: 1 rules, 6 sections, 40 AI directives, 1 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\base-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 6 AI directives in rule: MUST-READ-Rule
+📊 File processing complete: 1 rules, 0 sections, 6 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\code-quality-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 19 AI directives in rule: Code-Quality-Rule
+📊 File processing complete: 1 rules, 0 sections, 19 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\architecture.md
+🤖 Running AI directive analysis on 7 sections...
+   ✅ Found 5 AI directives in section: System Architecture Overview
+   ✅ Found 9 AI directives in section: Key Technical Decisions
+   ✅ Found 9 AI directives in section: Component Architecture
+   ✅ Found 10 AI directives in section: Data Architecture
+   ✅ Found 4 AI directives in section: Integration Architecture
+   ✅ Found 8 AI directives in section: Performance Architecture
+   ✅ Found 7 AI directives in section: Deployment Architecture
+📊 File processing complete: 0 rules, 7 sections, 52 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\brief.md
+🤖 Running AI directive analysis on 9 sections...
+   ✅ Found 3 AI directives in section: Project Foundation
+   ✅ Found 4 AI directives in section: Core Problem Statement
+   ✅ Found 6 AI directives in section: 1. Admin Dashboard (Next.js/React)
+   ✅ Found 5 AI directives in section: 2. Driver Mobile App (React Native/Expo)
+   ✅ Found 5 AI directives in section: 3. Backend API (.NET 8, ASP.NET Core Web API, Azure App Services)
+   ✅ Found 6 AI directives in section: Key Business Objectives
+   ✅ Found 6 AI directives in section: Success Metrics
+   ✅ Found 5 AI directives in section: Target Users
+📊 File processing complete: 0 rules, 9 sections, 40 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\context.md
+🤖 Running AI directive analysis on 7 sections...
+   ✅ Found 2 AI directives in section: Current Work Focus
+   ✅ Found 6 AI directives in section: ✅ Completed Components
+   ✅ Found 9 AI directives in section: 🔄 In Progress Components
+   ✅ Found 12 AI directives in section: 📋 Next Priority Tasks
+   ✅ Found 3 AI directives in section: Current Development State
+   ✅ Found 4 AI directives in section: Key Technical Achievements
+📊 File processing complete: 0 rules, 7 sections, 36 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\product.md
+🤖 Running AI directive analysis on 19 sections...
+   ✅ Found 3 AI directives in section: Why This Product Exists
+   ✅ Found 3 AI directives in section: 1. Operational Inefficiency
+   ✅ Found 5 AI directives in section: 2. Limited Visibility
+   ✅ Found 2 AI directives in section: 3. Communication Gaps
+   ✅ Found 2 AI directives in section: 4. Financial Management Complexity
+   ✅ Found 1 AI directives in section: 5. Scalability Limitations
+   ✅ Found 6 AI directives in section: End-to-End Workflow
+   ✅ Found 10 AI directives in section: Key Features by Component
+   ✅ Found 5 AI directives in section: For Logistics Managers
+   ✅ Found 5 AI directives in section: For Drivers
+   ✅ Found 5 AI directives in section: For Customers
+   ✅ Found 5 AI directives in section: Performance Standards
+   ✅ Found 5 AI directives in section: Integration Capabilities
+   ✅ Found 5 AI directives in section: Competitive Advantages
+   ✅ Found 9 AI directives in section: Success Metrics
+📊 File processing complete: 0 rules, 19 sections, 71 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank\tech.md
+🤖 Running AI directive analysis on 9 sections...
+   ✅ Found 2 AI directives in section: Custom Kilocode Modes
+   ✅ Found 5 AI directives in section: Backend (.NET)
+   ✅ Found 6 AI directives in section: Frontend (Admin Dashboard)
+   ✅ Found 7 AI directives in section: Mobile (Driver App)
+   ✅ Found 6 AI directives in section: Infrastructure
+   ✅ Found 5 AI directives in section: External Service Integrations
+   ✅ Found 5 AI directives in section: Key Dependencies and Patterns
+   ✅ Found 12 AI directives in section: Development Environment Setup
+📊 File processing complete: 0 rules, 9 sections, 48 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\memory-bank-instructions.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 9 AI directives in rule: memory-bank-instructions
+📊 File processing complete: 1 rules, 0 sections, 9 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\process-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 6 AI directives in rule: Process-General-Rule
+📊 File processing complete: 1 rules, 0 sections, 6 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\security-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 9 AI directives in rule: Security-General-Rule
+📊 File processing complete: 1 rules, 0 sections, 9 AI directives, 0 patterns
+🔍 Processing file: C:\git\bolt-hotshot-logistics\.kilocode\rules-old\testing-general-rule.md
+🤖 Running AI directive analysis on 0 sections...
+   ✅ Found 8 AI directives in rule: Testing-General-Rule
+📊 File processing complete: 1 rules, 0 sections, 8 AI directives, 0 patterns
+
+📊 AI-Enhanced Crawling Summary:
+   Files processed: 26
+   Rules found: 7
+   Sections found: 234
+   AI Directives generated: 937
+   Patterns found: 73
+
+💾 Storing entities in Neo4j...
+💫 Creating relationships...
+✅ AI-Enhanced knowledge graph crawling completed!
+   Total entities: 1251
+   Total relations: 10072
+[context-iso] Rule tool completed, returning result
+[context-iso] Tool called: memory.rules.query_directives
+[context-iso] Routing to rule tool: memory.rules.query_directives
+🔍 DEBUG handleTool: name="memory.rules.query_directives"
+🔍 DEBUG: Routing to queryDirectives
+Error in queryDirectives: {"msg":"Cannot read properties of undefined (reading 'toLowerCase')","stack":"TypeError: Cannot read properties of undefined (reading 'toLowerCase')\n    at ScoringEngine.calculateAuthorityScore (file:///C:/git/contextiso/1-Presentation/dist/src/ranking/scoring-engine.js:168:25)\n    at ScoringEngine.scoreDirective (file:///C:/git/contextiso/1-Presentation/dist/src/ranking/scoring-engine.js:68:37)\n    at file:///C:/git/contextiso/1-Presentation/dist/src/rules/rule-manager.js:204:75\n    at Array.map (<anonymous>)\n    at RuleManager.queryDirectives (file:///C:/git/contextiso/1-Presentation/dist/src/rules/rule-manager.js:204:52)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async RuleManager.handleTool (file:///C:/git/contextiso/1-Presentation/dist/src/rules/rule-manager.js:82:24)\n    at async ContextISOServer.handleRuleTool (file:///C:/git/contextiso/1-Presentation/dist/src/index.js:189:24)\n    at async file:///C:/git/contextiso/1-Presentation/dist/src/index.js:151:36","args":{"userPrompt":"Update the Hotshot Logistics Admin Dashboard UI and backend to include four new job status cards (Pending, Assigned, EnRoute, Received) with specific colors and icons. Need to extend backend models, DTOs, service layer, repository logic, and create a Next.js frontend component with TailwindCSS. Ensure end-to-end data flow from database to UI display.","modeSlug":"code"}}
+[context-iso] Tool error: {}
+[context-iso] Tool called: memory.rules.query_directives
+[context-iso] Routing to rule tool: memory.rules.query_directives
+🔍 DEBUG handleTool: name="memory.rules.query_directives"
+🔍 DEBUG: Routing to queryDirectives
+Error in queryDirectives: {"msg":"Cannot read properties of undefined (reading 'toLowerCase')","stack":"TypeError: Cannot read properties of undefined (reading 'toLowerCase')\n    at ScoringEngine.calculateAuthorityScore (file:///C:/git/contextiso/1-Presentation/dist/src/ranking/scoring-engine.js:168:25)\n    at ScoringEngine.scoreDirective (file:///C:/git/contextiso/1-Presentation/dist/src/ranking/scoring-engine.js:68:37)\n    at file:///C:/git/contextiso/1-Presentation/dist/src/rules/rule-manager.js:204:75\n    at Array.map (<anonymous>)\n    at RuleManager.queryDirectives (file:///C:/git/contextiso/1-Presentation/dist/src/rules/rule-manager.js:204:52)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async RuleManager.handleTool (file:///C:/git/contextiso/1-Presentation/dist/src/rules/rule-manager.js:82:24)\n    at async ContextISOServer.handleRuleTool (file:///C:/git/contextiso/1-Presentation/dist/src/index.js:189:24)\n    at async file:///C:/git/contextiso/1-Presentation/dist/src/index.js:151:36","args":{"userPrompt":"Update the Hotshot Logistics Admin Dashboard UI and backend to include four new job status cards (Pending, Assigned, EnRoute, Received) with specific colors and icons. This involves extending backend models and DTOs, updating service layer and repository logic to aggregate counts per status, exposing REST or SignalR endpoints, and creating a reusable Next.js component with TailwindCSS that displays the status cards between main metric cubes and recent activity section.","modeSlug":"code"}}
+[context-iso] Tool error: {}
+[context-iso] file logging enabled -> C:\git\contextiso\contextiso-mcp.log
+[context-iso] entry condition matched, calling main()
+[context-iso] main: creating server instance
+[context-iso] constructor: creating Server instance
+[context-iso] constructor: loading Neo4j config
+[context-iso] main: initializing
+[context-iso] initialize: starting
+[context-iso] initialize: memory manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+Memory manager initialized successfully
+[context-iso] initialize: rule manager
+✅ Connected to Neo4j Aura successfully
+✅ Schema created successfully
+LLM provider initialized with local configuration
+Rule manager initialized successfully
+[context-iso] initialize: connecting rule manager to memory manager
+[context-iso] initialize: setting up tool handlers
+[context-iso] initialize: complete
+[context-iso] main: starting
+Creating stdio transport...
+Connecting server to transport...
+context-iso v1.0.0 started
+Server capabilities: ContextISO - Context Isolation & Optimization
+Server is now listening for MCP requests...
+[context-iso] Tool called: memory.rules.query_directives
+[context-iso] Routing to rule tool: memory.rules.query_directives
+🔍 DEBUG handleTool: name="memory.rules.query_directives"
+🔍 DEBUG: Routing to queryDirectives
+[context-iso] Rule tool completed, returning result

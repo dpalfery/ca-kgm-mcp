@@ -10,9 +10,33 @@
  */
 
 import { fileURLToPath } from 'url';
+import fs from 'fs';
+import path from 'path';
 
 // Force early output to verify script execution
 console.error('[context-iso] entrypoint loaded');
+
+// Optional file logging (to debug stdio issues in clients)
+try {
+  const logFile = process.env.CONTEXTISO_LOG_FILE;
+  if (logFile) {
+    const resolved = path.resolve(logFile);
+    const dir = path.dirname(resolved);
+    fs.mkdirSync(dir, { recursive: true });
+    const stream = fs.createWriteStream(resolved, { flags: 'a' });
+    const origError = console.error.bind(console);
+    const origWarn = console.warn.bind(console);
+    console.error = (...args: any[]) => {
+      try { stream.write(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch {}
+      origError(...args);
+    };
+    console.warn = (...args: any[]) => {
+      try { stream.write(args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n'); } catch {}
+      origWarn(...args);
+    };
+    console.error(`[context-iso] file logging enabled -> ${resolved}`);
+  }
+} catch {}
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -142,13 +166,20 @@ class ContextISOServer {
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      console.error(`[context-iso] Tool called: ${name}`);
 
       try {
         // Route to appropriate handler based on tool name
         if (name.startsWith('memory.rules.')) {
-          return await this.handleRuleTool(name, args);
+          console.error(`[context-iso] Routing to rule tool: ${name}`);
+          const result = await this.handleRuleTool(name, args);
+          console.error(`[context-iso] Rule tool completed, returning result`);
+          return result;
         } else if (name.startsWith('memory.')) {
-          return await this.handleMemoryTool(name, args);
+          console.error(`[context-iso] Routing to memory tool: ${name}`);
+          const result = await this.handleMemoryTool(name, args);
+          console.error(`[context-iso] Memory tool completed, returning result`);
+          return result;
         } else {
           throw new McpError(
             ErrorCode.MethodNotFound,
@@ -156,6 +187,7 @@ class ContextISOServer {
           );
         }
       } catch (error) {
+        console.error(`[context-iso] Tool error:`, error);
         if (error instanceof McpError) {
           throw error;
         }
@@ -235,6 +267,22 @@ process.on('SIGINT', () => {
 process.on('SIGTERM', () => {
   console.error('Received SIGTERM, shutting down gracefully...');
   process.exit(0);
+});
+
+// Handle unhandled errors
+process.on('uncaughtException', (error) => {
+  console.error('[context-iso] UNCAUGHT EXCEPTION:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[context-iso] UNHANDLED REJECTION:', reason);
+  console.error('[context-iso] Promise:', promise);
+  process.exit(1);
+});
+
+process.on('error', (error) => {
+  console.error('[context-iso] PROCESS ERROR:', error);
 });
 
 // Run if this is the entry point (handle Windows path differences)

@@ -1,7 +1,7 @@
 // src/rules/local-model-manager.ts
-import { RulesEngineConfig } from '../config/rules-engine-config';
-import { LLMProvider, LLMGenerationOptions, LLMJsonResponse } from './llm-provider';
-import { LLMProviderFactory } from './llm-provider-factory';
+import { RulesEngineConfig } from '../config/rules-engine-config.js';
+import { LLMProvider, LLMGenerationOptions, LLMJsonResponse } from './llm-provider.js';
+import { LLMProviderFactory } from './llm-provider-factory.js';
 import { z } from 'zod';
 
 export class LocalModelManager {
@@ -18,7 +18,7 @@ export class LocalModelManager {
   public initialize(): void {
     try {
       this.provider = LLMProviderFactory.createProvider(this.config);
-      console.log(`LLM provider initialized with ${this.config.llm.provider} configuration`);
+      console.error(`LLM provider initialized with ${this.config.llm.provider} configuration`);
     } catch (error) {
       console.error('Failed to initialize LLM provider:', error);
       this.provider = null;

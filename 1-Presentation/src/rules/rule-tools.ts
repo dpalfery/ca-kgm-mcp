@@ -17,56 +17,17 @@ export function setupRuleTools(allowedModes?: string[]): Tool[] {
       inputSchema: {
         type: 'object',
         properties: {
-          taskDescription: {
+          userPrompt: {
             type: 'string',
-            description: 'Description of the coding task or development work being performed'
+            description: 'The complete user prompt or task context to analyze for relevant rules'
           },
           modeSlug: {
             type: 'string',
             enum: modes,
             description: `Optional context mode to influence rule selection (${modes.join(', ')})`
-          },
-          options: {
-            type: 'object',
-            properties: {
-              strictLayer: {
-                type: 'boolean',
-                description: 'If true, only return rules that exactly match the detected architectural layer',
-                default: false
-              },
-              maxItems: {
-                type: 'number',
-                description: 'Maximum number of directives to return in the context block. If not provided, uses server-configured default.',
-                minimum: 1,
-                maximum: 20
-              },
-              tokenBudget: {
-                type: 'number',
-                description: 'Soft token budget for the formatted context block. Set to 0 or omit to disable token trimming. If not provided, uses server-configured default.',
-                minimum: 0
-              },
-              includeMetadata: {
-                type: 'boolean',
-                description: 'If true, include rule metadata (ids, sources, tags) in rules[]. If not provided, uses server-configured default.'
-              },
-              includeBreadcrumbs: {
-                type: 'boolean',
-                description: 'Include source file paths and section references in the output',
-                default: true
-              },
-              severityFilter: {
-                type: 'array',
-                items: {
-                  type: 'string',
-                  enum: ['MUST', 'SHOULD', 'MAY']
-                },
-                description: 'Filter directives by severity level (MUST = required, SHOULD = recommended, MAY = optional)'
-              }
-            },
-            additionalProperties: false
           }
         },
-        required: ['taskDescription'],
+        required: ['userPrompt'],
         additionalProperties: false
       }
     },
@@ -79,24 +40,6 @@ export function setupRuleTools(allowedModes?: string[]): Tool[] {
           text: {
             type: 'string',
             description: 'Text to analyze for context detection (task description, code snippet, etc.)'
-          },
-          options: {
-            type: 'object',
-            properties: {
-              returnKeywords: {
-                type: 'boolean',
-                description: 'Include extracted keywords in the response',
-                default: false
-              },
-              confidenceThreshold: {
-                type: 'number',
-                description: 'Minimum confidence level for context detection (0.0 to 1.0)',
-                default: 0.5,
-                minimum: 0,
-                maximum: 1
-              }
-            },
-            additionalProperties: false
           }
         },
         required: ['text'],
@@ -128,22 +71,6 @@ export function setupRuleTools(allowedModes?: string[]): Tool[] {
             },
             description: 'Array of markdown documents to process',
             minItems: 1
-          },
-          options: {
-            type: 'object',
-            properties: {
-              overwrite: {
-                type: 'boolean',
-                description: 'Replace existing rules from the same source files',
-                default: false
-              },
-              validateOnly: {
-                type: 'boolean',
-                description: 'Parse and validate documents without storing them (useful for testing rule syntax)',
-                default: false
-              }
-            },
-            additionalProperties: false
           }
         },
         required: ['documents'],
@@ -152,40 +79,20 @@ export function setupRuleTools(allowedModes?: string[]): Tool[] {
     },
     {
       name: 'memory.rules.index_rules',
-      description: 'Index project rules by crawling specified paths for markdown files. Recursively scans directories and imports all discovered rule documents into the knowledge graph for the current workspace.',
+      description: 'Index project rules by crawling configured paths for markdown files. Recursively scans directories and imports all discovered rule documents into the knowledge graph for the current workspace. Paths are configured via INDEX_PATHS environment variable.',
       inputSchema: {
         type: 'object',
-        properties: {
-          paths: {
-            type: 'string',
-            description: 'Comma-delimited list of file or directory paths to crawl (e.g., "./docs/rules,./guidelines.md"). Supports absolute and relative paths. Directories are scanned recursively for .md files.'
-          },
-          options: {
-            type: 'object',
-            properties: {
-              overwrite: {
-                type: 'boolean',
-                description: 'Replace existing rules from the same source files',
-                default: false
-              },
-              filePattern: {
-                type: 'string',
-                description: 'Glob pattern for matching files (e.g., "**/*.md", "**/RULES.md")',
-                default: '**/*.md'
-              },
-              excludePatterns: {
-                type: 'array',
-                items: {
-                  type: 'string'
-                },
-                description: 'Patterns to exclude (e.g., ["**/node_modules/**", "**/.git/**"])'
-              }
-            },
-            additionalProperties: false
-          }
-        },
-        required: ['paths'],
-        additionalProperties: false
+        properties: {},
+        required: []
+      }
+    },
+    {
+      name: 'memory.rules.reset_index',
+      description: 'Dangerous: Deletes all indexed data for the current WORKSPACE so you can perform a fresh full crawl. Removes Rule, Section, Directive nodes (workspace-scoped) and cleans up orphan Topic/Layer/Technology nodes.',
+      inputSchema: {
+        type: 'object',
+        properties: {},
+        required: []
       }
     }
   ];

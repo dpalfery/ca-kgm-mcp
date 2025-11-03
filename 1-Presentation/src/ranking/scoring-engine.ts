@@ -191,11 +191,13 @@ export class ScoringEngine {
    * Calculate relevance score based on content match
    */
   private static calculateRelevanceScore(content: string, layer: string): number {
-    const contentLength = content.length;
+    const text = (content || '');
+    const l = (layer || '');
+    const contentLength = text.length;
     const relevanceBase = Math.min(contentLength / 100, 1) * 50; // Max 50 points
 
     // Bonus if layer mentioned in content
-    if (layer !== '*' && content.toLowerCase().includes(layer.toLowerCase())) {
+    if (l && l !== '*' && text.toLowerCase().includes(l.toLowerCase())) {
       return Math.min(relevanceBase + 25, 100);
     }
 
@@ -257,6 +259,7 @@ export class ScoringEngine {
    * Calculate authoritativeness score (based on section and severity)
    */
   private static calculateAuthorityScore(severity: string, section: string): number {
+    const secText = (section || '').toLowerCase();
     let score = 30; // Base score
 
     // Bonus for critical sections
@@ -267,7 +270,7 @@ export class ScoringEngine {
     ];
 
     for (const keyword of criticalKeywords) {
-      if (section.toLowerCase().includes(keyword)) {
+      if (secText.includes(keyword)) {
         score += 20;
         break;
       }
@@ -295,8 +298,8 @@ export class ScoringEngine {
 
     // Check for mode-specific keywords
     for (const [keyword, adjustment] of Object.entries(adjustments)) {
-      const searchText = `${directive.content} ${directive.topics.join(' ')} ${directive.section}`.toLowerCase();
-      if (searchText.includes(keyword.toLowerCase())) {
+      const searchText = `${directive.content || ''} ${(directive.topics || []).join(' ')} ${directive.section || ''}`.toLowerCase();
+      if (searchText.includes((keyword || '').toLowerCase())) {
         multiplier *= adjustment;
       }
     }
